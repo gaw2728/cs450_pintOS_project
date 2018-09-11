@@ -93,6 +93,9 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
+    /*ADDED: PA1 TIMER sleeping processes list type*/
+    struct list_elem sleep_elem;
+    int64_t sleep_time;
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -101,6 +104,9 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
+
+  /*ADDED: PA1 TIMER list of sleeping threads*/
+  struct list sleeping_list;
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.

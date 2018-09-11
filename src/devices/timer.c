@@ -30,6 +30,10 @@ static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
 
+
+/*MUTEX SEMAPHORE FOR SLEEPING_LIST*/
+static struct lock sleep_lock;
+
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
 void
@@ -84,16 +88,34 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
-/* Sleeps for approximately TICKS timer ticks.  Interrupts must
-   be turned on. */
+/* a is being provided for comparison b is being grabbed from the list*/
+bool sleep_compare (const struct list_elem *a, const struct list_elem *b,void *aux){
+  struct thread *thread_to_schedule = list_entry (a, struct thread, sleep_elem);
+  struct thread *stored_sleeping_thread = list_entry (b, struct thread, sleep_elem);
+  return (thread_to_schedule -> sleep_time < stored_sleeping_thread -> sleep_time);
+}
+
+/*PA1 TIMER: Modified. Handles the steps to sleep a thread
+*  It starts with retreaving the calling thread, asserting
+*  that it cannot be interrupted, making a check that it is
+*  not the idle_thread (just in case) and adds the thread to
+*  the protected sleeping_list.
+*/
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
-
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  lock_init(&sleep_lock);
+  /*Get a pointer to the thread that is myself*/
+  struct thread *this = thread_current();
+  /*Removed idle_thread check*/
+  /*Set this thread's time to wait*/
+  this -> sleep_time = timer_ticks() + ticks;
+  /*PROTECT INTERTION WITH A SEMAPHORE*/
+  lock_acquire(&sleep_lock);
+  list_insert_ordered(&sleeping_list, &this -> sleep_elem, &sleep_compare, NULL);
+  lock_release(&sleep_lock);
+  thread_block();
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -166,11 +188,33 @@ timer_print_stats (void)
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
 
-/* Timer interrupt handler. */
+/* Timer interrupt handler. 
+*  PA1 TIMER: Modified due to understanding of timer scheduling.
+*  Timer sends external interrupts every 4 ticks for scheduling.
+*  This interrupt handler will adress waking up sleeping threads.
+*/
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
+  /*Analyze this code*/
+  /*list_sleep_elem : list_elem of thread in sleeping_list*/
+  struct list_elem *list_sleep_elem, *next_sleep_elem;
+  struct thread *thread;
+  lock_acquire(&sleep_lock);
+  for(list_sleep_elem = list_begin(&sleeping_list); list_sleep_elem != list_end(&sleeping_list); )
+  {
+    thread = list_entry(list_sleep_elem, struct thread, sleep_elem);
+    if(timer_ticks() >= thread -> sleep_time)
+    {
+      next_sleep_elem = list_remove(list_sleep_elem);
+      thread_unblock(thread);
+      list_sleep_elem = next_sleep_elem;
+    }
+    else break;
+  }
+  lock_release(&sleep_lock);
+  /*End this analysis*/
   thread_tick ();
 }
 
