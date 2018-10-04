@@ -1,0 +1,108 @@
+
+                      +------------------------+
+                      |          CS 450        |
+                      | PROJECT 1: ALARM CLOCK |
+                      |     DESIGN DOCUMENT    |
+                      +------------------------+
+
+---- GROUP ----
+Alan Schexnayder    <schexnat@dukes.jmu.edu>
+Ryan Hurst          <hurstrc@dukes.jmu.edu>
+Geoffrey Wright     <wrigh2ga@dukes.jmu.edu>
+Elliott Germanovich <germanet@dukes.jmu.edu>
+
+                 ALARM CLOCK
+                 ===========
+
+---- DATA STRUCTURES ----
+
+>> A1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+
+Changes in thread.h:
+    struct semaphore sleep_sema; - semaphore
+The sleep_elem is used for adding the thread which contains it to a list of sleeping threads.
+
+    struct list_elem sleep_elem; - list of sleeping threads
+The sleep_sema element is used for waking up threads.
+
+    int64_t sleep_time; - The amount of time a thread should sleep
+The sleep_time int holds the amount of time for which the sleep should sleep.
+
+Changes in thread.c:
+static struct list sleeping_list;
+The list that we store threads in according to their wait
+        times.The wait time is used as a priority indicator.
+
+    ----ALGORITHMS-- --
+
+    >> A2 : Briefly describe what happens in a call to timer_sleep(),
+    >> including the effects of the timer interrupt handler
+            .If the tick parameter is not negative,
+    sleep_thread(ticks) is called.Once in sleep_thread(),
+    we make sure we’re not in an interrupt context, then disable interrupts,
+    then we set the current thread’s ticks to the number of ticks that have
+    already passed plus the number of ticks we want the thread to sleep,
+    which was passed to the function as a parameter.Then we insert the current
+    thread into the sleeping_list list according to its sleep ticks,
+    and according to the sleep_compare function.We block on
+        sleep_sema and are placed in its “waiters” list,
+    which blocks the thread,
+    effectively putting it to sleep.
+
+        >> A3 : What steps are taken to minimize the amount of time spent in >>
+                the timer interrupt handler
+    ? The timer interrupt handler calls the added helper function wake_thread()
+          .In wake_thread(),
+    we utilized a
+    while loop that will check the first element of our sleeping list.If
+    not enough time has passed to wake up the first element of the list,
+    or the list is empty,
+    it is known that no other threads can be woken up.The
+            while loop then breaks and the interrupt returns after re
+            - enabling interrupts..
+
+              ----SYNCHRONIZATION-- --
+
+        >> A4
+    : How are race conditions avoided when multiple threads call >>
+              timer_sleep() simultaneously
+          ? When a thread calls
+                timer_sleep() interrupting is disabled and the thread blocks on
+                the PintOS implementation of a semaphore which does
+                not care what order threads block in
+                    .Therefore we don’t have to worry about race
+                conditions when they block.
+
+                >> A5
+          : How are race conditions avoided when a timer interrupt occurs
+                >> during a call to timer_sleep()
+          ? In our implementation of timer_sleep() we disable interrupts,
+    and thus a timer interrupt does not stop a call to timer_sleep()
+            .Instead the interrupt is caught
+        and handled when interrupts are turned back on at the end of a call to
+                timer_sleep()
+                    .
+
+                ----RATIONALE-- --
+
+                >> A6
+    : Why did you choose this design
+    ? In what ways is it superior to >> another design you considered
+    ? Our design gives us control over when things wake up because we use a
+      compare function to place threads in a list according to their sleep ticks
+          .We considered using locks but found them to be unnecessary when
+      using the PintOS semaphore based design
+          .Locks are
+      not needed because adding to the sleepers list is enforced by our
+      sleep_compare function.Furthermore,
+    in the interrupt handler,
+    there cannot be any illegal
+    modification of the list because threads cannot be scheduled
+    while the interrupt is happening,
+    as it is an atomic operation
+        .In the interrupt handler we enforce who wakes up
+    using the sleeping_list as priority and the PintOS semaphore to only wake up
+    threads that should be woken.

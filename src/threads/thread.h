@@ -4,6 +4,8 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+/*PA1 ADDED: for semaphore stuff*/
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -94,7 +96,9 @@ struct thread
     struct list_elem elem;              /* List element. */
 
     /*ADDED: PA1 TIMER sleeping processes list type*/
+    struct semaphore sleep_sema;
     struct list_elem sleep_elem;
+    /*ADDED: sleep_time holds the time a thread is to sleep*/
     int64_t sleep_time;
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -104,9 +108,6 @@ struct thread
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
-
-  /*ADDED: PA1 TIMER list of sleeping threads*/
-  struct list sleeping_list;
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -143,5 +144,12 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+/*Helper functions added for PA1*/
+void sleep_thread(int64_t ticks);
+void wake_thread();
+bool sleep_compare (const struct list_elem *left,
+const struct list_elem *right, void *aux UNUSED);
+/*End PA1 functions*/
 
 #endif /* threads/thread.h */

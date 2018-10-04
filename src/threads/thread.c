@@ -4,6 +4,7 @@
 #include <random.h>
 #include <stdio.h>
 #include <string.h>
+#include "devices/timer.h"
 #include "threads/flags.h"
 #include "threads/interrupt.h"
 #include "threads/intr-stubs.h"
@@ -27,6 +28,9 @@ static struct list ready_list;
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
+
+/*ADDED: PA1 TIMER list of sleeping threads*/
+static struct list sleeping_list;
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -92,6 +96,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  list_init (&sleeping_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -464,6 +469,11 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
 
+  /*PA1 ADDED: This function initializes the init thread
+  Initializing our sleep semaphore here insures it is
+  initialized once and visible.*/
+  sema_init (&t->sleep_sema, 0);
+
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
@@ -578,6 +588,96 @@ allocate_tid (void)
 
   return tid;
 }
+
+/*sleep_compare
+PA1 ADDED: compares two sleeping list threads for insertion based on sleep_time
+NOTE: a is being provided for comparison b is being grabbed from the list
+
+return true on thread_to_schedule_->leep_time < sleep_time of thread stored in
+the list*/
+bool sleep_compare (const struct list_elem *a, const struct list_elem *b,void *aux){
+  /*Get the tread "objects" a and b*/
+  struct thread *thread_to_schedule = list_entry (a, struct thread, sleep_elem);
+  struct thread *stored_sleeping_thread = list_entry (b, struct thread, sleep_elem);
+  /*Compare their slle_time*/
+  return ((thread_to_schedule -> sleep_time) < (stored_sleeping_thread -> sleep_time));
+}
+
+/*sleep_thread
+PA1 ADDED: Handles the steps to sleeping a thread and adding it to sleeping list
+
+GEOFF NOTE MODIFIED (9/12/18): This new implementation is based on new understanding
+of how pintOS semaphores operate. Instead of using thread_block this implementation
+makes a thread block on a semaphore via sema_down. This works due to the below
+interrupt handling wake_thread signaling over the semaphore's internal "waiters"
+list when a thread is woken. Discovered from official sema_down documentation stating,
+  "This function may sleep, so it must not be called within an
+   interrupt handler.  This function may be called with
+   interrupts disabled, but if it sleeps then the next scheduled
+   thread will probably turn interrupts back on. "
+Calling here blocks/sleeps a thread on the semaphore's initialized to 0 waiters
+list.*/
+void sleep_thread(int64_t ticks){
+  /*Get the current thread*/
+  struct thread *this = thread_current();
+  /*get enum types highlighted in interrupt.h*/
+  enum intr_level old_level;
+  
+  ASSERT(!intr_context());
+  /*Disable interrupts during this process*/
+  old_level = intr_disable();
+
+  /*This thread's sleep time is equal to the passed ticks*/
+  this -> sleep_time = timer_ticks() + ticks;
+  /*Insert thread into sleeping thread list*/
+  list_insert_ordered(&sleeping_list, &this -> sleep_elem, &sleep_compare, NULL);
+  sema_down(&this->sleep_sema);
+}
+
+/*wake_thread
+PA1 ADDED: Handles the iterration of sleeping treads list waking appropriate
+threads.
+
+GEOFF NOTE MODIFIED (9/12/18): Upon further examination of Semaphore implementation
+changed to address waking up threads over a "blocking/notification" semaphore.
+From official documentation of "sema_up", "This function may be called from
+an interrupt handler." Doing so notifies all semaphores blocking on the
+semaphore according to the semaphore's internal "waiters" list.
+
+NOTE: This implementation deals with items at the FRONT of the sleeping_list
+each time.
+*/
+void wake_thread(){
+  /*list_sleep_elem : list_elem of thread in sleeping_list*/
+  struct thread *thread;
+
+  /*Disable interrupts during this process*/
+  enum intr_level old_level;
+  old_level = intr_disable();
+
+  /*While the list we're working on is not empty keep going*/
+  while (!list_empty (&sleeping_list))
+  {
+    /*Get a thread out of the front sleeping_list sleep_elem*/
+    thread = list_entry (list_front (&sleeping_list), struct thread, sleep_elem);
+
+    /*First item of the list always has least time to wait, if
+    the first item must wait there is no need to check the other
+    items.*/
+    if (timer_ticks() < thread->sleep_time)
+      break;//implicit don't need to check the rest
+
+    /*Signal the thread being woken up. The thread will be able
+    to decrement the semaphore and unblock.(See
+    sleep_thread)*/
+    sema_up (&thread->sleep_sema);
+    /*"Wake up thread"*/
+    list_pop_front (&sleeping_list);
+  }
+  intr_set_level (old_level);
+}
+
+
 
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
