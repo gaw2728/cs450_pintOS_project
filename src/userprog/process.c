@@ -21,14 +21,6 @@
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
-/*============================= PA2 ADDED CODE =============================*/
-/* Semaphore to enfore waiting to ensure a user program has had the chance to
-fully setup. */
-struct semaphore wait_for_setup;
-/* Boolean variable to express success or failure of process setup. */
-bool call_success;
-/*=========================== END PA2 ADDED CODE ===========================*/
-
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
@@ -45,8 +37,6 @@ tid_t
 process_execute (const char *args_line) 
 {
   char *args_copy; //PA2 CHANGED
-  sema_init(&wait_for_setup,0); //PA2 ADDED
-  call_success = true;  //PA2 ADDED
   tid_t tid;
 
   /* Make a copy of FILE_NAME.
@@ -63,8 +53,8 @@ process_execute (const char *args_line)
     palloc_free_page (args_copy); 
 
   /*============================= PA2 ADDED CODE =============================*/
-  sema_down(&wait_for_setup);
-  if(!call_success){
+  sema_down(&thread_current()->wait_for_setup);
+  if(!thread_current()->call_success){
     return -1;
   }
   /*=========================== END PA2 ADDED CODE ===========================*/
@@ -92,13 +82,13 @@ start_process (void *file_name_)
 
   /*============================= PA2 ADDED CODE =============================*/
   if (!success) {
-    call_success = false;
-    sema_up(&wait_for_setup);
+    thread_current()->call_success = false;
+    sema_up(&thread_current()->parent->wait_for_setup);
     thread_exit ();
   }
   else {
-    call_success = true;
-    sema_up(&wait_for_setup);
+    thread_current()->call_success = true;
+    sema_up(&thread_current()->parent->wait_for_setup);
   }
   /*=========================== END PA2 ADDED CODE ===========================*/
 

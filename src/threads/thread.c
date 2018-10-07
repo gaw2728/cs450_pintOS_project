@@ -469,10 +469,13 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
 
-  /*PA1 ADDED: This function initializes the init thread
-  Initializing our sleep semaphore here insures it is
-  initialized once and visible.*/
+/*============================= PA2 ADDED CODE =============================*/
+  /* PA2 save a thread's parent */
+  t->parent = running_thread();
+  /*PA1/PA2 ADDED: Semaphores for thread sync.*/
   sema_init (&t->sleep_sema, 0);
+  sema_init(&t->wait_for_setup,0);
+/*=========================== END PA2 ADDED CODE ===========================*/
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);

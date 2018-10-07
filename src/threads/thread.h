@@ -100,6 +100,17 @@ struct thread
     struct list_elem sleep_elem;
     /*ADDED: sleep_time holds the time a thread is to sleep*/
     int64_t sleep_time;
+
+  /*============================= PA2 ADDED CODE =============================*/
+    /*The below members were added for PA2 to handle syncronization of the 
+    creation of user processes. In other words we don't just want to wait until
+    the ELF file is loaded into memory, we also want it's parameters pushed
+    to the stack as well. For initialization of "parent" and "wait_for_setup"
+    look to thread.c->static void init_thread (1, 2, 3) [line 457]*/
+    struct semaphore wait_for_setup;
+    bool call_success;
+    struct thread* parent;
+  /*=========================== END PA2 ADDED CODE ===========================*/
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -147,7 +158,7 @@ int thread_get_load_avg (void);
 
 /*Helper functions added for PA1*/
 void sleep_thread(int64_t ticks);
-void wake_thread();
+void wake_thread(void);
 bool sleep_compare (const struct list_elem *left,
 const struct list_elem *right, void *aux UNUSED);
 /*End PA1 functions*/
