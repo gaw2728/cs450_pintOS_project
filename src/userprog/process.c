@@ -21,27 +21,53 @@
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
+/*============================= PA2 ADDED CODE =============================*/
+/* Semaphore to enfore waiting to ensure a user program has had the chance to
+fully setup. */
+struct semaphore wait_for_setup;
+/* Boolean variable to express success or failure of process setup. */
+bool call_success;
+/*=========================== END PA2 ADDED CODE ===========================*/
+
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
-   thread id, or TID_ERROR if the thread cannot be created. */
+   thread id, or TID_ERROR if the thread cannot be created. 
+
+   PA2 VARIABLE CHANGES:
+   1)"file_name" (original) misleading for calls to finctions that pass
+   arguments along with the name of the binary to be executed.
+   Therefore "file_name" changed to "args_line"
+
+   2)"fn_copy" has been changed to hold a copy of all arguments passed
+   and so has been changed to "args_copy"*/
 tid_t
-process_execute (const char *file_name) 
+process_execute (const char *args_line) 
 {
-  char *fn_copy;
+  char *args_copy; //PA2 CHANGED
+  sema_init(&wait_for_setup,0); //PA2 ADDED
+  call_success = true;  //PA2 ADDED
   tid_t tid;
 
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
-  fn_copy = palloc_get_page (0);
-  if (fn_copy == NULL)
+  args_copy = palloc_get_page (0);
+  if (args_copy == NULL)
     return TID_ERROR;
-  strlcpy (fn_copy, file_name, PGSIZE);
+  strlcpy (args_copy, args_line, PGSIZE);
 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (args_line, PRI_DEFAULT, start_process, args_copy);
+
   if (tid == TID_ERROR)
-    palloc_free_page (fn_copy); 
+    palloc_free_page (args_copy); 
+
+  /*============================= PA2 ADDED CODE =============================*/
+  sema_down(&wait_for_setup);
+  if(!call_success){
+    return -1;
+  }
+  /*=========================== END PA2 ADDED CODE ===========================*/
   return tid;
 }
 
@@ -63,8 +89,18 @@ start_process (void *file_name_)
 
   /* If load failed, quit. */
   palloc_free_page (file_name);
-  if (!success) 
+
+  /*============================= PA2 ADDED CODE =============================*/
+  if (!success) {
+    call_success = false;
+    sema_up(&wait_for_setup);
     thread_exit ();
+  }
+  else {
+    call_success = true;
+    sema_up(&wait_for_setup);
+  }
+  /*=========================== END PA2 ADDED CODE ===========================*/
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -437,7 +473,7 @@ setup_stack (void **esp)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
-        *esp = PHYS_BASE;
+        *esp = PHYS_BASE - 12;
       else
         palloc_free_page (kpage);
     }

@@ -632,6 +632,7 @@ void sleep_thread(int64_t ticks){
   /*Insert thread into sleeping thread list*/
   list_insert_ordered(&sleeping_list, &this -> sleep_elem, &sleep_compare, NULL);
   sema_down(&this->sleep_sema);
+  intr_set_level (old_level);
 }
 
 /*wake_thread
