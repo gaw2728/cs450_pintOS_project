@@ -1,0 +1,112 @@
+            +----------------------------+
+       	    |          CS 450            |
+            | PROJECT 2: USER PROGRAMS I |
+            |      DESIGN DOCUMENT     	 |
+		    +----------------------------+
+
+---- GROUP ----
+
+>> Fill in the names and email addresses of your group members.
+
+Geoffrey Wright <wrigh2ga@dukes.jmu.edu>
+
+---- PRELIMINARIES ----
+
+Current to this version implementation, PintOS busy-waits for user
+processes to get a chance to run. This is known behavior and should
+be considered when running this version of the project.
+
+			   ARGUMENT PASSING
+			   ================
+
+---- DATA STRUCTURES ----
+>> A1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+thread.h:
+	struct thread:
+		-> struct thread *parent: Points to the parent thread of
+		a created kernel thread.
+
+process.c:
+	process_execute:
+		->const char *args_line: parameter of process_execute function name
+		changed to clarify what it is.
+
+		->char *args_copy: variable to hold the copy of args_line, previously
+		implemented as fn_copy.
+
+		->char *file_name: re-used name, new variable to hold exclusivly just
+		the file name of the runable executable.
+
+		->char *save_ptr: new variable required for the use of strtok_r
+
+	start_process:
+		->char *token: required variable for the use of strtok_r
+
+		->char *save_ptr: required variable for the use of strtok_r
+
+		->int argc: a variable that stores the ammount of arguments in argv
+
+		->const char **argv: the argv "array" or "vector" to store the
+		different tokens of the passed arguments
+
+---- ALGORITHMS ----
+
+>> A2: Briefly describe how you implemented argument parsing.  How do
+>> you arrange for the elements of argv[] to be in the right order?
+>> How do you avoid overflowing the stack page?
+
+This implementation handles argument parting by use of the pre-defined
+palloc for memory allocation and strtok_r as recommended. With the use
+of strtor_k the passed arguments are able to be parsed over space
+characters then the tokens are stored in start_process->argv. In 
+essence this creates a new array of null terminated strings that are
+the arguments. By looping this places them in this vector in the
+"right" order. The call "echo x" becomes arv[0] = "echo", arv[1] = "x".
+
+The push_args helper function of process.c handles pushing arguments
+to the new process' stack using the argv vector mentioned earlier, the
+argc accumulator that hols how many arguments exist, and the *if_esp in
+start_process. This is because the newly setup interrupt frame should
+have the proper stack pointer for the process.
+
+Inside the push_args the items to be placed on the user stack are
+separated into their own "procedures" according to the order items
+should addressed. in most cases *esp -= 4; is used for pointer
+movement with the understanding that esp is an 8 bit pointer and
+words in PintOS are 32-bit in length. When pushing the argv items
+specifically, the length of each item is accounted for and the stack
+pointer is adjusted for its placement. This means that this segment is
+constructed from "the bottom up" but is in the correct convention order.
+
+Currently there is an assertion at the beginning of push_args that only
+allows arguments to be pushed for a user program if it will not overflow
+a page to do so.
+
+ASSERT((((argc * 2) + 5) * 32) < PGSIZE)
+all argv[argc] must store element and address on the stack
++ 5 other required stack elements
+* 32 bits for word size.
+should be less than the size of a page. 
+
+---- RATIONALE ----
+
+>> A3: Why does Pintos implement strtok_r() but not strtok()?
+
+PintOS implements strtok_r instead of strtok because strtok_r is
+reentrant. This means another process can interrupt the current
+process duing its call making it's own call to this function without
+adversly affecting the original caller. This means that strtok_r
+is safe for both interrupt and non-interrupt code to use.
+
+>> A4: In Pintos, the kernel separates commands into a executable name
+>> and arguments.  In Unix-like systems, the shell does this
+>> separation.  Identify at least two advantages of the Unix approach.
+
+1) It allows for up-front error checking on proper names of executables
+that exist and proper arguments and options. This minimizes time spent
+in the kernel.
+2) it assists in cutting down the complexity of kernel code to load and
+establish a process.

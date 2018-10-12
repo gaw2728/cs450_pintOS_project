@@ -102,14 +102,17 @@ struct thread
     int64_t sleep_time;
 
   /*============================= PA2 ADDED CODE =============================*/
-    /*The below members were added for PA2 to handle syncronization of the 
-    creation of user processes. In other words we don't just want to wait until
-    the ELF file is loaded into memory, we also want it's parameters pushed
-    to the stack as well. For initialization of "parent" and "wait_for_setup"
-    look to thread.c->static void init_thread (1, 2, 3) [line 457]*/
-    struct semaphore wait_for_setup;
-    bool call_success;
-    struct thread* parent;
+    /* Geoff NOTE: I removed the implementation of the below commented out
+    syncronization mechanisms. Upon discussion with professor Buchholz.
+    The anticipated behavior is that the OS should branch off a new thread that
+    will handle loading and executing the program code independantly. In other
+    words this semaphore and bool were unecissary for PA2. The parent pointer
+    member is now as well, however it does not harm PA2 code and begins to show
+    process relations in PintOS and PCB. "parent" initialized in init_thread
+    line 474.*/
+    /* struct semaphore wait_for_setup; */
+    /* bool call_success; */
+    struct thread *parent;
   /*=========================== END PA2 ADDED CODE ===========================*/
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

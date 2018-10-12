@@ -21,6 +21,12 @@
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
+/*============================= PA2 ADDED CODE =============================*/
+/* PA2 added helper function to keep code clean and push program args to
+the stack */
+static void push_args (const char *[], int cnt, void **esp);
+/*=========================== END PA2 ADDED CODE ===========================*/
+
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
@@ -36,7 +42,9 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 tid_t
 process_execute (const char *args_line) 
 {
-  char *args_copy; //PA2 CHANGED
+  char *args_copy = NULL; //PA2 CHANGED
+  char *file_name = NULL; //PA2 ADDED
+  char *save_ptr = NULL;  //PA2 ADDED
   tid_t tid;
 
   /* Make a copy of FILE_NAME.
@@ -46,18 +54,22 @@ process_execute (const char *args_line)
     return TID_ERROR;
   strlcpy (args_copy, args_line, PGSIZE);
 
+  /*============================= PA2 ADDED CODE =============================*/
+  /*Strip away the name of the executable*/
+  file_name = palloc_get_page (0);
+  if (file_name == NULL)
+    return TID_ERROR;
+  strlcpy (file_name, args_line, PGSIZE);
+  file_name = strtok_r(file_name, " ", &save_ptr);
+
+  /*=========================== END PA2 ADDED CODE ===========================*/
+
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (args_line, PRI_DEFAULT, start_process, args_copy);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, args_copy);
 
   if (tid == TID_ERROR)
     palloc_free_page (args_copy); 
 
-  /*============================= PA2 ADDED CODE =============================*/
-  sema_down(&thread_current()->wait_for_setup);
-  if(!thread_current()->call_success){
-    return -1;
-  }
-  /*=========================== END PA2 ADDED CODE ===========================*/
   return tid;
 }
 
@@ -67,28 +79,43 @@ static void
 start_process (void *file_name_)
 {
   char *file_name = file_name_;
+  char *token = NULL;     //PA2 ADDED
+  char *save_ptr = NULL;  //PA2 ADDED
+  int argc = 0;           //PA2 ADDED
   struct intr_frame if_;
   bool success;
 
+  /*============================= PA2 ADDED CODE =============================*/
+  /* Break apart the passed "file_name" parameters into individual tokens.
+     argv[0] should always be the program to be executed. */
+  const char **argv = (const char**) palloc_get_page(0);
+  if (argv == NULL){
+    printf("ERROR: Able to load Elf, but not enough memory to push arguments!");
+    success = false;
+  }
+  for (token = strtok_r(file_name, " ", &save_ptr); token != NULL;
+      token = strtok_r(NULL, " ", &save_ptr))
+  {
+    argv[argc++] = token;
+  }
+/*=========================== END PA2 ADDED CODE ===========================*/
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp);
-
-  /* If load failed, quit. */
-  palloc_free_page (file_name);
+  success = load (argv[0], &if_.eip, &if_.esp);
 
   /*============================= PA2 ADDED CODE =============================*/
   if (!success) {
-    thread_current()->call_success = false;
-    sema_up(&thread_current()->parent->wait_for_setup);
+    /* If load failed, quit. */
+    palloc_free_page (file_name);
+    palloc_free_page (argv);
     thread_exit ();
   }
   else {
-    thread_current()->call_success = true;
-    sema_up(&thread_current()->parent->wait_for_setup);
+    /*Push arguments to the stack*/
+    push_args (argv, argc, &if_.esp);
   }
   /*=========================== END PA2 ADDED CODE ===========================*/
 
@@ -114,6 +141,8 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+  while(1){
+  }
   return -1;
 }
 
@@ -463,7 +492,7 @@ setup_stack (void **esp)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
-        *esp = PHYS_BASE - 12;
+        *esp = PHYS_BASE;
       else
         palloc_free_page (kpage);
     }
@@ -489,3 +518,70 @@ install_page (void *upage, void *kpage, bool writable)
   return (pagedir_get_page (t->pagedir, upage) == NULL
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
+
+/*============================= PA2 ADDED CODE =============================*/
+/* push_args
+   ARGS:
+    char *argv_tokens: arguments for the established process
+    int argc: the number of arguments in argv_tokens
+    void **esp: The stack pointer to the process' stack in memory
+
+   push_args takes in the argv, argc, and stack pointer for a process and
+   sets up the process stack by the following convention.
+
+   0xbffffffc  argv[3][...]  "bar\0"   char[4]    highest ^  pushed |
+   0xbffffff8  argv[2][...]  "foo\0"   char[4]            |         |
+   0xbffffff5  argv[1][...]  "-l\0"  char[3]              |         |
+   0xbfffffed  argv[0][...]  "/bin/ls\0"   char[8]        |         |
+   0xbfffffec  word-align  0   uint8_t                    |         |
+   0xbfffffe8  argv[4]   0   char *                       |         |
+   0xbfffffe4  argv[3]   0xbffffffc  char *               |         |
+   0xbfffffe0  argv[2]   0xbffffff8  char *               |         |
+   0xbfffffdc  argv[1]   0xbffffff5  char *               |         |
+   0xbfffffd8  argv[0]   0xbfffffed  char *               |         |
+   0xbfffffd4  argv      0xbfffffd8  char **              |         |
+   0xbfffffd0  argc  4   int                              |         |
+   0xbfffffcc  return address  0   void (*) ()     lowest |         V  */
+static void
+push_args (const char *argv_tokens[], int argc, void **esp)
+{
+  /* There had better be 0 or more arguments*/
+  ASSERT(argc >= 0);
+  ASSERT((((argc * 2) + 5) * 32) < PGSIZE);
+  int i, len = 0;
+  /* pushing the argv[] members */
+  void* argv_addr[argc];
+  for (i = 0; i < argc; i++) {
+    len = strlen(argv_tokens[i]) + 1;
+    *esp -= len;
+    memcpy(*esp, argv_tokens[i], len);
+    argv_addr[i] = *esp;
+  }
+
+  /* push the word-align */
+  *esp = (void*)((unsigned int)(*esp) & 0xfffffffc);
+
+  /* push the required null pointer */
+  *esp -= 4;
+  *((uint32_t*) *esp) = 0;
+
+  /* pushing the pointers to the argv elements */
+  for (i = argc - 1; i >= 0; i--) {
+    *esp -= 4;
+    *((void**) *esp) = argv_addr[i];
+  }
+
+  /* push **argv aka. the pointer to the argv vector */
+  *esp -= 4;
+  *((void**) *esp) = (*esp + 4);
+
+  /* push argc */
+  *esp -= 4;
+  *((int*) *esp) = argc;
+
+  /* push return address */
+  *esp -= 4;
+  *((int*) *esp) = 0;
+
+}
+/*=========================== END PA2 ADDED CODE ===========================*/
