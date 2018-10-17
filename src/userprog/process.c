@@ -251,22 +251,19 @@ load (const char *file_name, void (**eip) (void), void **esp)
   /* Required by the tokenizer*/
   char *token;
   char *save_ptr;
-  /* Tokenized list of arguments 25 is a somewhat arbitrary limit,
-     informed by the 128 byte pintos command line limit. */
-  char *argv[25];
-  /* The number of arguments passed in on the command line (includes the program name),
-     so argc will always be at least 1. */
+  /* Tokenized list of arguments allocated to a PGSIZE*/
+  char *argv[PGSIZE];
   int argc = 0;
 
-  /* Tokenize the command line string with a " " (space) as a delimeter. */
+  /* THis for loop breaks up the file_name vector into an array
+  of string tokens that are \0 terminated.*/
   for(token = strtok_r((char *)file_name, " ", &save_ptr); token != NULL;
     token = strtok_r(NULL, " ", &save_ptr))
   {
-    /* Add token to the array of command line arguments. */
     argv[argc] = token;
-    argc++; /* Increment the number of args */
+    argc++;
   }
-  /******************** PA2 ADDED CODE ********************/
+  /******************** END PA2 ADDED CODE ********************/
 
   /* Open executable file. */
   file = filesys_open (argv[0]);
@@ -485,13 +482,15 @@ setup_stack (void **esp, int argc, char *argv[])
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success) {
         *esp = PHYS_BASE - 12;
-        //TODO: this is where the items are being pushed to the stack
 
-        /* A list of addresses to the values that are intially added to the stack.  */
-        uint32_t * argv_pointers[argc];
+        /******************** PA2 ADDED CODE ********************/
 
-        /* First add all of the command line arguments in descending order, including
-           the program name. */
+        /*A pointer array to contain the pointers to the pushed argv
+        actual arguments */
+        uint32_t * argv_addrs[argc];
+
+        /* loop and add all actual arguments to the stack, adding their
+        addresses to the argv_addrs array */
         for(int i = argc-1; i >= 0; i--)
         {
           /* Allocate enough space for the entire string (plus and extra byte for
@@ -499,34 +498,34 @@ setup_stack (void **esp, int argc, char *argv[])
               of pointers. */
           *esp = *esp - sizeof(char)*(strlen(argv[i])+1);
           memcpy(*esp, argv[i], sizeof(char)*(strlen(argv[i])+1));
-          argv_pointers[i] = (uint32_t *)*esp;
+          argv_addrs[i] = (uint32_t *)*esp;
         }
-        /* Allocate space for & add the null sentinel. */
+        //TODO: Word align?
+
+        /* Push null sentinel value */
         *esp = *esp - 4;
         (*(int *)(*esp)) = 0;
 
-        /* Push onto the stack each char* in arg_value_pointers[] (each of which
-           references an argument that was previously added to the stack). */
+        /* Push all pointers to actual values */
         *esp = *esp - 4;
         for(int i = argc-1; i >= 0; i--)
         {
-          (*(uint32_t **)(*esp)) = argv_pointers[i];
+          (*(uint32_t **)(*esp)) = argv_addrs[i];
           *esp = *esp - 4;
         }
 
-        /* Push onto the stack a pointer to the pointer of the address of the
-           first argument in the list of arguments. */
-        (*(uintptr_t **)(*esp)) = *esp + 4;
+        /* Push the address pointer array pointer */
+        (*(uint32_t **)(*esp)) = *esp + 4; //change to uint32_t
 
-        /* Push onto the stack the number of program arguments. */
+        /* Push argc variable */
         *esp = *esp - 4;
         *(int *)(*esp) = argc;
 
-        /* Push onto the stack a fake return address, which completes stack initialization. */
+        /* Push placeholder return address. */
         *esp = *esp - 4;
         (*(int *)(*esp)) = 0;
 
-        //END EXAMPLE TAKEN FROM ONLINE
+        /******************** END PA2 ADDED CODE ********************/
       }
       else {
         palloc_free_page (kpage);
