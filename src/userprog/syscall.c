@@ -1,8 +1,9 @@
 #include "userprog/syscall.h"
-#include <stdio.h>
-#include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include <stdio.h>
+#include <string.h>
+#include <syscall-nr.h>
 
 static void syscall_handler (struct intr_frame *);
 
