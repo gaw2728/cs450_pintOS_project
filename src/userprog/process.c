@@ -487,8 +487,9 @@ setup_stack (void **esp, int argc, char *argv[])
 
         /*A pointer array to contain the pointers to the pushed argv
         actual arguments */
-        uint32_t * argv_addrs[argc];
+        uint32_t *argv_addrs[argc];
 
+        ASSERT((((argc * 2) + 5) * 32) < PGSIZE)
         /* loop and add all actual arguments to the stack, adding their
         addresses to the argv_addrs array */
         for(int i = argc-1; i >= 0; i--)
@@ -515,7 +516,7 @@ setup_stack (void **esp, int argc, char *argv[])
         }
 
         /* Push the address pointer array pointer */
-        (*(uint32_t **)(*esp)) = *esp + 4; //change to uint32_t
+        (*(uint32_t **)(*esp)) = *esp + 4;
 
         /* Push argc variable */
         *esp = *esp - 4;

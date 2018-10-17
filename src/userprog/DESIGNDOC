@@ -42,15 +42,26 @@ process.c:
 
 		->char *save_ptr: new variable required for the use of strtok_r
 
-	start_process:
+	load:
 		->char *token: required variable for the use of strtok_r
 
 		->char *save_ptr: required variable for the use of strtok_r
 
-		->int argc: a variable that stores the ammount of arguments in argv
+		->char *argv[]: this array hold the token strings from strtok_r
+		loop on file_name vector
 
-		->const char **argv: the argv "array" or "vector" to store the
-		different tokens of the passed arguments
+		->int argc: will represent the number of argument tokens in argv[]
+
+	setup_stack:
+		NOTE: FUNCTION PARAMS MODIFIED
+			void **esp
+			int argc     passed from load
+			char *argv[] passed from load
+
+		->uint32_t *argv_addrs[]: the array for the addresses to the argv
+		members on the stack.
+		
+syscall.c:
 
 ---- ALGORITHMS ----
 
@@ -58,32 +69,42 @@ process.c:
 >> you arrange for the elements of argv[] to be in the right order?
 >> How do you avoid overflowing the stack page?
 
-This implementation handles argument parting by use of the pre-defined
-palloc for memory allocation and strtok_r as recommended. With the use
-of strtor_k the passed arguments are able to be parsed over space
-characters then the tokens are stored in start_process->argv. In 
-essence this creates a new array of null terminated strings that are
-the arguments. By looping this places them in this vector in the
-"right" order. The call "echo x" becomes arv[0] = "echo", arv[1] = "x".
+Implimentation updated (10/17/2018):
 
-The push_args helper function of process.c handles pushing arguments
-to the new process' stack using the argv vector mentioned earlier, the
-argc accumulator that hols how many arguments exist, and the *if_esp in
-start_process. This is because the newly setup interrupt frame should
-have the proper stack pointer for the process.
+The logic of where argument passing and how it is happening has changed
+slightly.
 
-Inside the push_args the items to be placed on the user stack are
-separated into their own "procedures" according to the order items
-should addressed. in most cases *esp -= 4; is used for pointer
-movement with the understanding that esp is an 8 bit pointer and
-words in PintOS are 32-bit in length. When pushing the argv items
-specifically, the length of each item is accounted for and the stack
-pointer is adjusted for its placement. This means that this segment is
-constructed from "the bottom up" but is in the correct convention order.
+The implementation of parsing the file_name vector has been moved to
+process.c->load(). Inside load the implementation of argument parsing
+uses strtok_r() to loop over file_name storing the tokens in and argv
+array that is set to PGSIZE size. While no argument line should get
+this big the system works in PGSIZE allocations of memory. The assert
+later in this explination should still hold to check that the stack
+will not overflow a page. If that is a possibility than the assert
+will currently panic the kernel and therefore no arguments will be
+passed.
 
-Currently there is an assertion at the beginning of push_args that only
-allows arguments to be pushed for a user program if it will not overflow
-a page to do so.
+In process.c->setup_stack(), which has now been modified to take
+the number of arguments and the token argument array, pushing of
+arguments to the stack is handled. This is done in by the convention
+explained in the PA2 write-up and is separated into code blocks to
+show these steps. The process starts underneath the "*esp = PHYS_BASE"
+(line 484 process.c) line described in the write up. The decision to do
+the process this way was to ensure direct access to the current stack
+pointer and address the issue of argument pushing at the point of
+the stack being setup. By the naming convention of the function and
+by process it made logical sense ot us to adress it here.
+
+Argument actuals are placed in there correct place by offsetting the
+stack pointer by the size of items when placing them to the stack.
+Other uniform items are placed with the decreasing the pointer by 4
+(4 bytes for a 32 bit system) and placing them with the correct casting
+for their type (uint32_t for address members and int for null terminal
+and numerics).
+
+Currently there is an assertion at the beginning of the argument pushing
+section that only allows arguments to be pushed for a user program if it
+will not overflow a page to do so. The assert is explained below.
 
 ASSERT((((argc * 2) + 5) * 32) < PGSIZE)
 all argv[argc] must store element and address on the stack
@@ -108,5 +129,5 @@ is safe for both interrupt and non-interrupt code to use.
 1) It allows for up-front error checking on proper names of executables
 that exist and proper arguments and options. This minimizes time spent
 in the kernel.
-2) it assists in cutting down the complexity of kernel code to load and
+2) It assists in cutting down the complexity of kernel code to load and
 establish a process.
