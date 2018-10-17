@@ -13,8 +13,11 @@ syscall_init (void)
 }
 
 static void
-syscall_handler (struct intr_frame *f UNUSED) 
+syscall_handler (struct intr_frame *f) 
 {
-  printf ("system call!\n");
+	char *sp = f->esp;
+  	printf ("system call!\n");
+  	//args passed for a printf are an int, buffer, and size
+  	printf("The system call number is %d.\n", (int)*sp);
   thread_exit ();
 }

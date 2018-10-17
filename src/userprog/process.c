@@ -21,18 +21,13 @@
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
-/*============================= PA2 ADDED CODE =============================*/
-/* PA2 added helper function to keep code clean and push program args to
-the stack */
-static void push_args (const char *[], int cnt, void **esp);
-/*=========================== END PA2 ADDED CODE ===========================*/
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
    thread id, or TID_ERROR if the thread cannot be created. 
 
-   PA2 VARIABLE CHANGES:
+   PA2 VARIABLE CHANGES
    1)"file_name" (original) misleading for calls to finctions that pass
    arguments along with the name of the binary to be executed.
    Therefore "file_name" changed to "args_line"
@@ -79,45 +74,21 @@ static void
 start_process (void *file_name_)
 {
   char *file_name = file_name_;
-  char *token = NULL;     //PA2 ADDED
-  char *save_ptr = NULL;  //PA2 ADDED
-  int argc = 0;           //PA2 ADDED
   struct intr_frame if_;
   bool success;
 
-  /*============================= PA2 ADDED CODE =============================*/
-  /* Break apart the passed "file_name" parameters into individual tokens.
-     argv[0] should always be the program to be executed. */
-  const char **argv = (const char**) palloc_get_page(0);
-  if (argv == NULL){
-    printf("ERROR: Able to load Elf, but not enough memory to push arguments!");
-    success = false;
-  }
-  for (token = strtok_r(file_name, " ", &save_ptr); token != NULL;
-      token = strtok_r(NULL, " ", &save_ptr))
-  {
-    argv[argc++] = token;
-  }
-/*=========================== END PA2 ADDED CODE ===========================*/
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (argv[0], &if_.eip, &if_.esp);
+  success = load (file_name, &if_.eip, &if_.esp);
 
-  /*============================= PA2 ADDED CODE =============================*/
   if (!success) {
     /* If load failed, quit. */
     palloc_free_page (file_name);
-    palloc_free_page (argv);
     thread_exit ();
   }
-  else {
-    /*Push arguments to the stack*/
-    push_args (argv, argc, &if_.esp);
-  }
-  /*=========================== END PA2 ADDED CODE ===========================*/
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -250,7 +221,7 @@ struct Elf32_Phdr
 #define PF_W 2          /* Writable. */
 #define PF_R 4          /* Readable. */
 
-static bool setup_stack (void **esp);
+static bool setup_stack (void **esp, int argc, char *argv[]);
 static bool validate_segment (const struct Elf32_Phdr *, struct file *);
 static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
@@ -276,8 +247,29 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 
+  /******************** PA2 ADDED CODE ********************/
+  /* Required by the tokenizer*/
+  char *token;
+  char *save_ptr;
+  /* Tokenized list of arguments 25 is a somewhat arbitrary limit,
+     informed by the 128 byte pintos command line limit. */
+  char *argv[25];
+  /* The number of arguments passed in on the command line (includes the program name),
+     so argc will always be at least 1. */
+  int argc = 0;
+
+  /* Tokenize the command line string with a " " (space) as a delimeter. */
+  for(token = strtok_r((char *)file_name, " ", &save_ptr); token != NULL;
+    token = strtok_r(NULL, " ", &save_ptr))
+  {
+    /* Add token to the array of command line arguments. */
+    argv[argc] = token;
+    argc++; /* Increment the number of args */
+  }
+  /******************** PA2 ADDED CODE ********************/
+
   /* Open executable file. */
-  file = filesys_open (file_name);
+  file = filesys_open (argv[0]);
   if (file == NULL) 
     {
       printf ("load: %s: open failed\n", file_name);
@@ -357,7 +349,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     }
 
   /* Set up stack. */
-  if (!setup_stack (esp))
+  if (!setup_stack (esp, argc, argv))
     goto done;
 
   /* Start address. */
@@ -482,7 +474,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
 static bool
-setup_stack (void **esp) 
+setup_stack (void **esp, int argc, char *argv[]) 
 {
   uint8_t *kpage;
   bool success = false;
@@ -491,10 +483,54 @@ setup_stack (void **esp)
   if (kpage != NULL) 
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
-      if (success)
-        *esp = PHYS_BASE;
-      else
+      if (success) {
+        *esp = PHYS_BASE - 12;
+        //TODO: this is where the items are being pushed to the stack
+
+        /* A list of addresses to the values that are intially added to the stack.  */
+        uint32_t * argv_pointers[argc];
+
+        /* First add all of the command line arguments in descending order, including
+           the program name. */
+        for(int i = argc-1; i >= 0; i--)
+        {
+          /* Allocate enough space for the entire string (plus and extra byte for
+             '/0'). Copy the string to the stack, and add its reference to the array
+              of pointers. */
+          *esp = *esp - sizeof(char)*(strlen(argv[i])+1);
+          memcpy(*esp, argv[i], sizeof(char)*(strlen(argv[i])+1));
+          argv_pointers[i] = (uint32_t *)*esp;
+        }
+        /* Allocate space for & add the null sentinel. */
+        *esp = *esp - 4;
+        (*(int *)(*esp)) = 0;
+
+        /* Push onto the stack each char* in arg_value_pointers[] (each of which
+           references an argument that was previously added to the stack). */
+        *esp = *esp - 4;
+        for(int i = argc-1; i >= 0; i--)
+        {
+          (*(uint32_t **)(*esp)) = argv_pointers[i];
+          *esp = *esp - 4;
+        }
+
+        /* Push onto the stack a pointer to the pointer of the address of the
+           first argument in the list of arguments. */
+        (*(uintptr_t **)(*esp)) = *esp + 4;
+
+        /* Push onto the stack the number of program arguments. */
+        *esp = *esp - 4;
+        *(int *)(*esp) = argc;
+
+        /* Push onto the stack a fake return address, which completes stack initialization. */
+        *esp = *esp - 4;
+        (*(int *)(*esp)) = 0;
+
+        //END EXAMPLE TAKEN FROM ONLINE
+      }
+      else {
         palloc_free_page (kpage);
+      }
     }
   return success;
 }
@@ -518,70 +554,3 @@ install_page (void *upage, void *kpage, bool writable)
   return (pagedir_get_page (t->pagedir, upage) == NULL
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
-
-/*============================= PA2 ADDED CODE =============================*/
-/* push_args
-   ARGS:
-    char *argv_tokens: arguments for the established process
-    int argc: the number of arguments in argv_tokens
-    void **esp: The stack pointer to the process' stack in memory
-
-   push_args takes in the argv, argc, and stack pointer for a process and
-   sets up the process stack by the following convention.
-
-   0xbffffffc  argv[3][...]  "bar\0"   char[4]    highest ^  pushed |
-   0xbffffff8  argv[2][...]  "foo\0"   char[4]            |         |
-   0xbffffff5  argv[1][...]  "-l\0"  char[3]              |         |
-   0xbfffffed  argv[0][...]  "/bin/ls\0"   char[8]        |         |
-   0xbfffffec  word-align  0   uint8_t                    |         |
-   0xbfffffe8  argv[4]   0   char *                       |         |
-   0xbfffffe4  argv[3]   0xbffffffc  char *               |         |
-   0xbfffffe0  argv[2]   0xbffffff8  char *               |         |
-   0xbfffffdc  argv[1]   0xbffffff5  char *               |         |
-   0xbfffffd8  argv[0]   0xbfffffed  char *               |         |
-   0xbfffffd4  argv      0xbfffffd8  char **              |         |
-   0xbfffffd0  argc  4   int                              |         |
-   0xbfffffcc  return address  0   void (*) ()     lowest |         V  */
-static void
-push_args (const char *argv_tokens[], int argc, void **esp)
-{
-  /* There had better be 0 or more arguments*/
-  ASSERT(argc >= 0);
-  ASSERT((((argc * 2) + 5) * 32) < PGSIZE);
-  int i, len = 0;
-  /* pushing the argv[] members */
-  void* argv_addr[argc];
-  for (i = 0; i < argc; i++) {
-    len = strlen(argv_tokens[i]) + 1;
-    *esp -= len;
-    memcpy(*esp, argv_tokens[i], len);
-    argv_addr[i] = *esp;
-  }
-
-  /* push the word-align */
-  *esp = (void*)((unsigned int)(*esp) & 0xfffffffc);
-
-  /* push the required null pointer */
-  *esp -= 4;
-  *((uint32_t*) *esp) = 0;
-
-  /* pushing the pointers to the argv elements */
-  for (i = argc - 1; i >= 0; i--) {
-    *esp -= 4;
-    *((void**) *esp) = argv_addr[i];
-  }
-
-  /* push **argv aka. the pointer to the argv vector */
-  *esp -= 4;
-  *((void**) *esp) = (*esp + 4);
-
-  /* push argc */
-  *esp -= 4;
-  *((int*) *esp) = argc;
-
-  /* push return address */
-  *esp -= 4;
-  *((int*) *esp) = 0;
-
-}
-/*=========================== END PA2 ADDED CODE ===========================*/
