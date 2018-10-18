@@ -113,6 +113,7 @@ struct thread
     /* struct semaphore wait_for_setup; */
     /* bool call_success; */
     struct thread *parent;
+    int exit_status; /* holds the exit status */
   /*=========================== END PA2 ADDED CODE ===========================*/
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
