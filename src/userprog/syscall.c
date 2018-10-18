@@ -6,6 +6,7 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
+#include <console.h>
 #include <stdio.h>
 #include <syscall-nr.h>
 
@@ -15,6 +16,7 @@ void get_stack_arguments(struct intr_frame *f, int *args, int num_of_args);
 void check_valid_addr(const void *ptr_to_check);
 void exit(int status);
 int read(int fd, void *buffer, unsigned size);
+int write(int fd, const void *buffer, unsigned size);
 /******************** END PA2 ADDED CODE ********************/
 
 void syscall_init(void) {
@@ -36,42 +38,81 @@ static void syscall_handler(struct intr_frame *f) {
   printf("The system call number is %d.\n", (int)*sp);
   printf("The enum for a write is %d.\n", SYS_WRITE);
 
-  get_stack_arguments(f, &args[0], 3);
-  printf("The file descriptor passed was %d.\n", args[0]);
-  printf("The string passed to printf was \"%s\".\n", (char *)args[1]);
-  printf("The number of bytes to write that was passed was %d.\n", args[2]);
+  // get_stack_arguments(f, &args[0], 3);
+  // printf("The file descriptor passed was %d.\n", args[0]);
+  // printf("The string passed to printf was \"%s\".\n", (char *)args[1]);
+  // printf("The number of bytes to write that was passed was %d.\n", args[2]);
 
   switch (*sys_call) {
   case SYS_EXIT:
     get_stack_arguments(f, &args[0], 1);
     thread_current()->exit_status = args[1];
     /*TODO: SET STATUS*/
+    printf("%s\n", "EXITING!");
     exit(args[1]);
     break;
     /**/
   case SYS_READ:
-
+    // get arguments
     get_stack_arguments(f, &args[0], 3);
+    // variable for holding buffer
     buffer = (char *)args[1];
+    // hold size of buffer
     size = args[2];
     printf("%s\n", "1");
+    // check that each byte of the buffer is valid in memory
     for (int i = 0; i < size; i++) {
       check_valid_addr((const void *)buffer);
       buffer++;
     }
 
+    // get the page directory page from memory for the buffer
     buffer_page_ptr =
         pagedir_get_page(thread_current()->pagedir, (const void *)args[1]);
+    // checking for valid buffer
     if (buffer_page_ptr == NULL) {
       exit(-1);
     }
     printf("%s\n", "2");
 
-    // args[1] = (int)buffer_page_ptr;
-
+    // assign page ptr to buffer
+    args[1] = (int)buffer_page_ptr;
+    // read from a fd into a buffer and hold
+    // the bytes read in return register
     f->eax = read(args[0], (void *)args[1], (unsigned)args[2]);
+
+    printf("%s\n", (char *)args[1]);
+
     break;
   case SYS_WRITE:
+    get_stack_arguments(f, &args[0], 3);
+    // variable for holding buffer
+    buffer = (char *)args[1];
+    // hold size of buffer
+    size = args[2];
+    printf("%s\n", "4");
+    // check that each byte of the buffer is valid in memory
+    for (int i = 0; i < size; i++) {
+      check_valid_addr((const void *)buffer);
+      buffer++;
+    }
+
+    // get the page directory page from memory for the buffer
+    buffer_page_ptr =
+        pagedir_get_page(thread_current()->pagedir, (const void *)args[1]);
+    // checking for valid buffer
+    if (buffer_page_ptr == NULL) {
+      exit(-1);
+    }
+    printf("%s\n", "5");
+
+    // assign page ptr to buffer
+    args[1] = (int)buffer_page_ptr;
+
+    // write buffer into a "file" and hold
+    // the bytes read in return register
+    f->eax = write(args[0], (const void *)args[1], (unsigned)args[2]);
+
     break;
   default:
     break;
@@ -82,6 +123,9 @@ static void syscall_handler(struct intr_frame *f) {
   }
 }
 
+/**
+ * Exit program
+ */
 void exit(int status) {
   /*TODO: ASK ABOUT STATUS*/
   // process termination message (process_exit) ()if pd!= null
@@ -90,18 +134,40 @@ void exit(int status) {
   thread_exit();
 }
 
+/**
+ * Read into a buffer
+ */
 int read(int fd, void *buffer, unsigned size) {
   printf("%s\n", "3");
+  int i;
   char *buf = (char *)buffer;
+  printf("%d\n", size);
+  // use the input fd
   if (fd == 0) {
-    for (int i = 0; i < (int)size; i++) {
+    // fill the buffer with user input
+    for (i = 0; i < (int)size; i++) {
       buf[i] = input_getc();
+      printf("%s\n", "in loop");
     } //
-    return 0;
+    printf("%s\n", "out loop");
+    printf("%s\n", buf);
+
+    return i;
   }
 
-  return -1;
+  return 0;
   // TODO: RETURN
+}
+
+/**
+ * Write from a buffer
+ */
+int write(int fd, const void *buffer, unsigned size) {
+  if (fd == 1) {
+    putbuf(buffer, size);
+    return size;
+  }
+  return 0;
 }
 /******************** PA2 ADDED CODE ********************/
 /* Check to make sure that the given pointer is in user space,
