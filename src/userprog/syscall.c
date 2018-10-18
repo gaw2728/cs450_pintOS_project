@@ -44,6 +44,7 @@ static void syscall_handler(struct intr_frame *f) {
   switch (*sys_call) {
   case SYS_EXIT:
     get_stack_arguments(f, &args[0], 1);
+    thread_current()->exit_status = args[1];
     /*TODO: SET STATUS*/
     exit(args[1]);
     break;
@@ -95,6 +96,7 @@ int read(int fd, void *buffer, unsigned size) {
     for (int i = 0; i < (int)size; i++) {
       buf[i] = input_getc();
     } //
+    return 0;
   }
 
   return -1;
