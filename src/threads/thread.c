@@ -474,7 +474,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->parent = running_thread();
   /*PA1/PA2 ADDED: Semaphores for thread sync.*/
   sema_init (&t->sleep_sema, 0);
-  /*sema_init(&t->wait_for_setup,0);*/
+  sema_init (&t->process_wait_sema,0);
 /*=========================== END PA2 ADDED CODE ===========================*/
 
   old_level = intr_disable ();

@@ -29,6 +29,12 @@ thread.h:
 		-> struct thread *parent: Points to the parent thread of
 		a created kernel thread.
 
+		-> struct semaphore process_wait_sema: semaphore used in process_wait
+		(functionality minimal for this project, functions like rough 
+		thread_join)
+		
+		->int exit_status: Holds the exit status of a thread for exit syscall
+
 process.c:
 	process_execute:
 		->const char *args_line: parameter of process_execute function name

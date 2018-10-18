@@ -141,9 +141,8 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED)
 {
-  while(1){
-  }
-  return -1;
+  sema_down(&thread_current()->process_wait_sema);
+  return 0;
 }
 
 /* Free the current process's resources. */
@@ -154,6 +153,7 @@ process_exit (void)
   uint32_t *pd;
   /* prints exit status */
   printf("%s: exit(%d)\n", cur->name, cur->exit_status);
+  sema_up(&thread_current()->parent->process_wait_sema);
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */

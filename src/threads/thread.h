@@ -109,8 +109,10 @@ struct thread
     words this semaphore and bool were unecissary for PA2. The parent pointer
     member is now as well, however it does not harm PA2 code and begins to show
     process relations in PintOS and PCB. "parent" initialized in init_thread
-    line 474.*/
-    /* struct semaphore wait_for_setup; */
+    line 474.
+
+    Semaphore recycled to handle process_wait*/
+    struct semaphore process_wait_sema;
     /* bool call_success; */
     struct thread *parent;
     int exit_status; /* holds the exit status */

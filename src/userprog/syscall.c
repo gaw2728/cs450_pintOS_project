@@ -86,6 +86,7 @@ void exit(int status) {
   /*TODO: ASK ABOUT STATUS*/
   // process termination message (process_exit) ()if pd!= null
   // hold exit status
+  thread_current()->exit_status = status;
   thread_exit();
 }
 
