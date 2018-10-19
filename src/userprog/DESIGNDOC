@@ -9,6 +9,7 @@
 >> Fill in the names and email addresses of your group members.
 
 Geoffrey Wright <wrigh2ga@dukes.jmu.edu>
+Ryan Hurst <hurstrc@dukes.jmu.edu>
 
 ---- PRELIMINARIES ----
 
@@ -30,9 +31,9 @@ thread.h:
 		a created kernel thread.
 
 		-> struct semaphore process_wait_sema: semaphore used in process_wait
-		(functionality minimal for this project, functions like rough 
+		(functionality minimal for this project, functions like rough
 		thread_join)
-		
+
 		->int exit_status: Holds the exit status of a thread for exit syscall
 
 process.c:
@@ -67,7 +68,7 @@ process.c:
 This implementation handles argument parting by use of the pre-defined
 palloc for memory allocation and strtok_r as recommended. With the use
 of strtor_k the passed arguments are able to be parsed over space
-characters then the tokens are stored in start_process->argv. In 
+characters then the tokens are stored in start_process->argv. In
 essence this creates a new array of null terminated strings that are
 the arguments. By looping this places them in this vector in the
 "right" order. The call "echo x" becomes arv[0] = "echo", arv[1] = "x".
@@ -95,7 +96,7 @@ ASSERT((((argc * 2) + 5) * 32) < PGSIZE)
 all argv[argc] must store element and address on the stack
 + 5 other required stack elements
 * 32 bits for word size.
-should be less than the size of a page. 
+should be less than the size of a page.
 
 ---- RATIONALE ----
 
