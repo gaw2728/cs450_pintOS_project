@@ -5,7 +5,7 @@ int
 main (void)
 {
   //debug_backtrace();
-  printf ("Hello, world!");
+  printf ("Hello, world!\n");
   //exit(0);
   //printf ("After exit");
   return 0;

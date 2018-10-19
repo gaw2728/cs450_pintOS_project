@@ -27,16 +27,15 @@ static void syscall_handler(struct intr_frame *f) {
   /******************** PA2 ADDED CODE ********************/
   /* Holds the stack arguments that directly follow the system call. */
   int args[3];
-  char *sp = f->esp;
   int *sys_call = f->esp;
   char *buffer;
   int size;
   void *buffer_page_ptr;
   // The switch case will probably look like this switch (*(int*)sp)
-  printf("system call!\n");
+  //printf("system call!\n");
   // args passed for a printf are an int, buffer, and size
-  printf("The system call number is %d.\n", (int)*sp);
-  printf("The enum for a write is %d.\n", SYS_WRITE);
+  //printf("The system call number is %d.\n", (int)*sp);
+  //printf("The enum for a write is %d.\n", SYS_WRITE);
 
   // get_stack_arguments(f, &args[0], 3);
   // printf("The file descriptor passed was %d.\n", args[0]);
@@ -46,10 +45,14 @@ static void syscall_handler(struct intr_frame *f) {
   switch (*sys_call) {
   case SYS_EXIT:
     get_stack_arguments(f, &args[0], 1);
-    thread_current()->exit_status = args[1];
-    /*TODO: SET STATUS*/
-    printf("%s\n", "EXITING!");
-    exit(args[1]);
+    //printf("%s\n", "EXITING!");
+    /*GEOFF'S NOTE: IN THE CASE OF THIS SYSTEM CALL
+    ONLY ONE ARGUMENT EXISTS PAST SYSCALL_NUM.
+    AFTER CALL TO GET_STACK_ARGUMENTS THIS ARGUMENT
+    EXISTS IN args[0] not args[1]. MINOR CORRECTION
+    HERE TO PASS THE RIGHT ARGUMENT. WAS CAUSING
+    IMPROPER EXIT OUTPUT.*/
+    exit(args[0]);
     break;
     /**/
   case SYS_READ:
@@ -73,7 +76,7 @@ static void syscall_handler(struct intr_frame *f) {
     if (buffer_page_ptr == NULL) {
       exit(-1);
     }
-    printf("%s\n", "2");
+    //printf("%s\n", "2");
 
     // assign page ptr to buffer
     args[1] = (int)buffer_page_ptr;
@@ -90,7 +93,7 @@ static void syscall_handler(struct intr_frame *f) {
     buffer = (char *)args[1];
     // hold size of buffer
     size = args[2];
-    printf("%s\n", "4");
+    //printf("%s\n", "4");
     // check that each byte of the buffer is valid in memory
     for (int i = 0; i < size; i++) {
       check_valid_addr((const void *)buffer);
@@ -104,7 +107,7 @@ static void syscall_handler(struct intr_frame *f) {
     if (buffer_page_ptr == NULL) {
       exit(-1);
     }
-    printf("%s\n", "5");
+    //printf("%s\n", "5");
 
     // assign page ptr to buffer
     args[1] = (int)buffer_page_ptr;
@@ -127,9 +130,9 @@ static void syscall_handler(struct intr_frame *f) {
  * Exit program
  */
 void exit(int status) {
-  /*TODO: ASK ABOUT STATUS*/
-  // process termination message (process_exit) ()if pd!= null
-  // hold exit status
+  /* GEFF'S NOTE: STATUS HERE IS SET PROPERLY.
+  THE EXIT MESSAGE PRINTOUT HANDLED IN 
+  PROCESS.C->PROCESS_EXIT*/
   thread_current()->exit_status = status;
   thread_exit();
 }
