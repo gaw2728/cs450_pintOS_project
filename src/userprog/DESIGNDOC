@@ -59,6 +59,40 @@ process.c:
 		->const char **argv: the argv "array" or "vector" to store the
 		different tokens of the passed arguments
 
+syscall.c
+  syscall_handler:
+    -> int args[3]: holds stack arguments and makes it easier to retrieve
+                    arguments on the stack.
+    -> char *sp: holds the stack pointer.
+    -> char *sys_call: pointer to system call number.
+    -> char *buffer: buffer for I/O operations
+    -> int size: the size of the buffer
+    -> void *buffer_page_ptr: a pointer to a page to be used by the buffer.
+  exit:
+    -> int status: the exit status of the process.
+  read:
+    -> int fd: the file descriptor to be used by the function
+    -> void *buffer: used as a buffer to hold *size* bytes of data,
+                     read from file fd.
+    -> unsigned size: the number of bytes to be read from file fd
+                      into the buffer.
+    -> char *buf: cast buffer to hold individual characters in an
+                  array of chars.
+  write:
+    -> int fd: the file descriptor to be used by the function
+    -> void *buffer: used as a buffer to hold *size* bytes of data,
+                     write to file fd.
+    -> unsigned size: the number of bytes to be written to file fd
+                      into the buffer.
+  check_address:
+    -> const void *check_ptr: a pointer to an address in memory.
+  get_arguments:
+    -> struct intr_frame *f: the stack interrupt frame.
+    -> int *args: integer pointer to stack arguments.
+    -> int num_args: the number of arguments needed by the system call.
+    -> int *arg_ptr: temporary variable to hold pointer to arguments.
+
+
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe how you implemented argument parsing.  How do
