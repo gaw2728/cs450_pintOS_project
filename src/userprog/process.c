@@ -61,7 +61,6 @@ process_execute (const char *args_line)
     return TID_ERROR;
   strlcpy (file_name, args_line, PGSIZE);
   file_name = strtok_r(file_name, " ", &save_ptr);
-
   /*=========================== END PA2 ADDED CODE ===========================*/
 
   /* Create a new thread to execute FILE_NAME. */
@@ -79,6 +78,7 @@ static void
 start_process (void *file_name_)
 {
   char *file_name = file_name_;
+  /*token and save_ptr are required for strtok_r()*/
   char *token = NULL;     //PA2 ADDED
   char *save_ptr = NULL;  //PA2 ADDED
   int argc = 0;           //PA2 ADDED
@@ -141,8 +141,10 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED)
 {
+  /*============================= PA2 ADDED CODE =============================*/
   sema_down(&thread_current()->process_wait_sema);
   return 0;
+  /*=========================== END PA2 ADDED CODE ===========================*/
 }
 
 /* Free the current process's resources. */
@@ -151,9 +153,11 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
+  /*============================= PA2 ADDED CODE =============================*/
   /* prints exit status */
   printf("%s: exit(%d)\n", cur->name, cur->exit_status);
   sema_up(&thread_current()->parent->process_wait_sema);
+  /*=========================== END PA2 ADDED CODE ===========================*/
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -550,18 +554,22 @@ push_args (const char *argv_tokens[], int argc, void **esp)
   /* There had better be 0 or more arguments*/
   ASSERT(argc >= 0);
   ASSERT((((argc * 2) + 5) * 32) < PGSIZE);
-  int i, len = 0;
+  int i = 0;             /* Utility variable for loops*/
+  int elem_length = 0    /* Length of an argv element */
   /* pushing the argv[] members */
   void* argv_addr[argc];
   for (i = 0; i < argc; i++) {
-    len = strlen(argv_tokens[i]) + 1;
-    *esp -= len;
-    memcpy(*esp, argv_tokens[i], len);
+    elem_length = strlen(argv_tokens[i]) + 1;
+    *esp -= elem_length;
+    memcpy(*esp, argv_tokens[i], elem_length);
     argv_addr[i] = *esp;
   }
 
-  /* push the word-align */
-  *esp = (void*)((unsigned int)(*esp) & 0xfffffffc);
+  /* push the word-align 
+  Since 4 bytes = 32 bits the stack pointer should be
+  moved 4 - (address%4) bytes to account for uneven
+  argv actuals. (They don't line-up regularly)*/
+  *esp -= 4 - (int)esp % 4;
 
   /* push the required null pointer */
   *esp -= 4;
