@@ -555,7 +555,7 @@ push_args (const char *argv_tokens[], int argc, void **esp)
   ASSERT(argc >= 0);
   ASSERT((((argc * 2) + 5) * 32) < PGSIZE);
   int i = 0;             /* Utility variable for loops*/
-  int elem_length = 0    /* Length of an argv element */
+  int elem_length = 0;    /* Length of an argv element */
   /* pushing the argv[] members */
   void* argv_addr[argc];
   for (i = 0; i < argc; i++) {
