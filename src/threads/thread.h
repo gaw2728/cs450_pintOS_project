@@ -112,14 +112,19 @@ struct thread
     line 474.
 
     Semaphore recycled to handle process_wait*/
-    struct semaphore process_wait_sema;
+    //struct semaphore process_wait_sema;
     /* bool call_success; */
-    struct thread *parent;
-    int exit_status; /* holds the exit status */
+    //struct thread *parent;
+    //int exit_status; /* holds the exit status */
   /*=========================== END PA2 ADDED CODE ===========================*/
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    /*============================= PA3 ADDED CODE =============================*/
+    /* New process control block struct for PA3, renders above PA2 members
+    defunct. */
+    struct process_control_block pcb;
+    /*=========================== END PA3 ADDED CODE ===========================*/
 #endif
 
     /* Owned by thread.c. */

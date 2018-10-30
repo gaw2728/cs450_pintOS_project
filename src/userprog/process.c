@@ -141,10 +141,14 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED)
 {
-  /*============================= PA2 ADDED CODE =============================*/
+  /*=========================== PA3 MODIFIED CODE ============================*/
+
+  /* TODO: LOOK INTO MODIFYING IMPLEMENTATION OF LINE BELOW 
+     member PROCESS_WAIT_SEMA COMMENTED OUT IN THREAD.H  
+     ACCORDING TO PA3 WRITE-UP WILL UTILIZE SYSCALL->WAIT  */
   sema_down(&thread_current()->process_wait_sema);
   return 0;
-  /*=========================== END PA2 ADDED CODE ===========================*/
+  /*=========================== END PA3 ADDED CODE ===========================*/
 }
 
 /* Free the current process's resources. */
@@ -153,11 +157,14 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
-  /*============================= PA2 ADDED CODE =============================*/
+  /*=========================== PA3 MODIFIED CODE ============================*/
   /* prints exit status */
-  printf("%s: exit(%d)\n", cur->name, cur->exit_status);
+  printf("%s: exit(%d)\n", cur->name, cur->pcb->exit_status); /* Modified */
+
+  /* TODO: LOOK INTO MODIFYING IMPLEMENTATION OF LINE BELOW 
+     member PROCESS_WAIT_SEMA COMMENTED OUT IN THREAD.H  */
   sema_up(&thread_current()->parent->process_wait_sema);
-  /*=========================== END PA2 ADDED CODE ===========================*/
+  /*=========================== END PA3 ADDED CODE ===========================*/
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
