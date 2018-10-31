@@ -102,29 +102,14 @@ struct thread
     /*ADDED: sleep_time holds the time a thread is to sleep*/
     int64_t sleep_time;
 
-  /*============================= PA2 ADDED CODE =============================*/
-    /* Geoff NOTE: I removed the implementation of the below commented out
-    syncronization mechanisms. Upon discussion with professor Buchholz.
-    The anticipated behavior is that the OS should branch off a new thread that
-    will handle loading and executing the program code independantly. In other
-    words this semaphore and bool were unecissary for PA2. The parent pointer
-    member is now as well, however it does not harm PA2 code and begins to show
-    process relations in PintOS and PCB. "parent" initialized in init_thread
-    line 474.
-
-    Semaphore recycled to handle process_wait*/
-    struct semaphore process_wait_sema;
-    /* bool call_success; */
-    struct thread *parent;
-    //int exit_status; /* holds the exit status */
-  /*=========================== END PA2 ADDED CODE ===========================*/
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
     /*============================= PA3 ADDED CODE =============================*/
-    /* New process control block struct for PA3, renders above PA2 members
-    defunct. */
+    /* New process control block struct for PA3 */
     struct process_control_block *pcb;
+    /* All threads will have a child list if needed*/
+    struct list child_list;       
     /*=========================== END PA3 ADDED CODE ===========================*/
 #endif
 

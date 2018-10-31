@@ -469,17 +469,22 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
 
-/*============================= PA2 ADDED CODE =============================*/
-  /* PA2 save a thread's parent */
-  t->parent = running_thread();
-  /*PA1/PA2 ADDED: Semaphores for thread sync.*/
+/*============================= PA1 ADDED CODE +============================*/
+  /*PA1 ADDED: Semaphores for thread sync.*/
   sema_init (&t->sleep_sema, 0);
-  sema_init (&t->process_wait_sema,0);
-/*=========================== END PA2 ADDED CODE ===========================*/
+/*=========================== END PA1 ADDED CODE ===========================*/
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
+
+/*============================= PA3 ADDED CODE +============================*/
+  /*Have to initialize a thread's pcb and child_list*/
+#ifdef USERPROG
+  t->pcb = NULL;
+  list_init(&t->child_list);
+#endif
+/*=========================== END PA3 ADDED CODE ===========================*/
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

@@ -7,20 +7,29 @@
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
 #include "userprog/syscall.h"
+#include "threads/synch.h"
 #include <console.h>
 #include <stdio.h>
 #include <syscall-nr.h>
 
+/********************** PA3 ADDED CODE **********************/
+/*This lock is for protecting file system access*/
+struct lock filesys;
+
 static void syscall_handler(struct intr_frame *);
-/******************** PA2 ADDED CODE ********************/
+
 void get_arguments(struct intr_frame *f, int *args, int num_of_args);
 void check_address(const void *ptr_to_check);
 void exit(int status);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
-/******************** END PA2 ADDED CODE ********************/
+void mem_access_failure(void); //called to release lock and exit
+/******************** END PA3 ADDED CODE ********************/
 
 void syscall_init(void) {
+  /********************** PA3 ADDED CODE **********************/
+  lock_init (&filesys);
+  /******************** END PA3 ADDED CODE ********************/
   intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
@@ -33,6 +42,8 @@ static void syscall_handler(struct intr_frame *f) {
   char *buffer;
   int size;
   void *buffer_page_ptr;
+  /*Result currently used in sys_exec & sys_wait*/
+  int result;
 
   switch (*sys_call) {
 
@@ -49,29 +60,26 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_EXEC:
-    /*TODO: SYSCALL EXEC HANDLER*/
-    /*Creates a new process and runs the executable whose name is given in cmd_line, passing any given arguments, and returns the new process's program id (pid).
-    Must return pid -1, which otherwise should not be a valid pid, if the program cannot load or run for any reason.
-    Thus, the parent process cannot return from the exec until it knows whether the child process successfully loaded its executable.
-    If you correctly implemented the synchronization requirement of the previous project, you have already done this.*/
+    /*Below retrives the cmd_line to create the process*/
+    get_arguments(f, &args[0], 1);
+    char *cmd_line = (char *) args[0];
+    /*Check for valid pointer*/
+    check_address((const void *) cmd_line);
+    /*CRITICAL SECTION*/
+    lock_acquire(&filesys);
+    result = (int) process_execute(cmd_line);
+    lock_release(&filesys);
+    /*END CRITICAL SECTION*/
+    f->eax = (uint32_t) result;
     break;
 
   case SYS_WAIT:
-    /*TODO SYSCALL WAIT HANDLER*/
-    /*Waits for a child process pid and retrieves the child's exit status.
-
-    If pid is still alive, waits until it terminates. Then, returns the status that pid passed to exit. If pid did not call exit(), but was terminated by the kernel (e.g. killed due to an exception), wait(pid) must return -1. It is perfectly legal for a parent process to wait for child processes that have already terminated by the time the parent calls wait, but the kernel must still allow the parent to retrieve its child's exit status, or learn that the child was terminated by the kernel.
-
-    wait must fail and return -1 immediately if any of the following conditions is true:
-
-    pid does not refer to a direct child of the calling process. pid is a direct child of the calling process if and only if the calling process received pid as a return value from a successful call to exec. Note that children are not inherited: if A spawns child B and B spawns child process C, then A cannot wait for C, even if B is dead. A call to wait(C) by process A must fail. Similarly, orphaned processes are not assigned to a new parent if their parent process exits before they do.
-    The process that calls wait has already called wait on pid. That is, a process may wait for any given child at most once.
-
-    Processes may spawn any number of children, wait for them in any order, and may even exit without having waited for some or all of their children. Your design should consider all the ways in which waits can occur. All of a process's resources, including its struct thread, must be freed whether its parent ever waits for it or not, and regardless of whether the child exits before or after its parent.
-
-    You must ensure that Pintos does not terminate until the initial process exits. The supplied Pintos code tries to do this by calling process_wait() (in "userprog/process.c") from main() (in "threads/init.c"). We suggest that you implement process_wait() according to the comment at the top of the function and then implement the wait system call in terms of process_wait().
-
-    Implementing this system call requires considerably more work than any of the rest.*/
+    /*Below retrieves the pid that the process is waiting on.*/
+    get_arguments(f, &args[0], 1);
+    int *pid = (int *) args[0];
+    check_address((const void *) pid);
+    result = (int) process_wait(*pid);
+    f->eax = (uint32_t) result;
     break;
 
   case SYS_CREATE:
@@ -168,6 +176,17 @@ static void syscall_handler(struct intr_frame *f) {
   }
 }
 
+/******************** PA3 MODIFIED CODE ********************/
+
+/*Called in cases of invalid memory access to free lock if 
+needed and exit*/
+void mem_access_failure(void) {
+  if (lock_held_by_current_thread(&filesys))
+    lock_release (&filesys);
+
+  exit (-1);
+}
+
 /**
  * Exit program
  */
@@ -212,7 +231,7 @@ int write(int fd, const void *buffer, unsigned size) {
   }
   return 0;
 }
-/******************** PA2 ADDED CODE ********************/
+
 /* Determine if the given address is valid in user memory */
 void check_address(const void *check_ptr) {
   /* If the address is not within the bounds of user memory or equal
@@ -221,7 +240,7 @@ void check_address(const void *check_ptr) {
   if (!is_user_vaddr(check_ptr) || check_ptr == NULL ||
       check_ptr < (void *)0x08048000) {
     /* Terminate the program */
-    exit(-1);
+    mem_access_failure();
   }
 }
 
@@ -236,4 +255,4 @@ void get_arguments(struct intr_frame *f, int *args, int num_args) {
     args[i] = *arg_ptr;
   }
 }
-/******************** END PA2 ADDED CODE ********************/
+/******************** END PA3 ADDED CODE ********************/

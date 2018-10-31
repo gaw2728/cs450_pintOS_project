@@ -2,6 +2,7 @@
 #define USERPROG_PROCESS_H
 
 #include "threads/thread.h"
+#include "threads/synch.h"
 /*============================= PA3 ADDED CODE =============================*/
 /* This new struct PCB is to clarify data members belonging to processes that
 the kernel will use for process syncronization, control, etc. 
@@ -22,6 +23,8 @@ a pcb, it simply will not be utalized by the kernel.
 4) For our projects process mapping is 1 to 1 therefore tid == pid && 
 pid == tid and should be set as such. */
 typedef int pid_t;
+#define PID_ERROR ((pid_t) -1)
+#define PID_INIT  ((pid_t) -2)
 
 pid_t process_execute (const char *file_name);
 int process_wait (pid_t);
@@ -30,14 +33,21 @@ void process_activate (void);
 
 struct process_control_block
 {
-	pid_t pid;       /* Process ID num */
-	int exit_status;  /* Process exit status migrated from PA2 */
-	/* List of children associated with this process */
-	struct list child_list;      /* TODO Determine location */
-	struct list_elem child_elem; /* This should be here */
+	/*=============== MEMBERS FOR PROCESS CREATION AND SYNC ===============*/
+	pid_t pid;                    /* Process ID num */
+	int exit_status;              /* Process exit status migrated from PA2 */
+	const char* cmd_line;         /* added for new process_execute */
+	struct thread *parent;        /* pointer to this thread's parent thread*/
+	struct list_elem child_elem;  /* child List element */
+	bool parent_waiting;          /* to see if a child is being waited on */
+	bool child_exit;              /* to notify that a child has exited */
+	bool orphan_flag;             /* to tell if a child process is orphaned*/
 
-	/*Consider migration of struct semaphore process_wait_sema and strict 
-	*thread parent to this struct.*/
+	/*semaphore for the initialization of a new process.*/
+	struct semaphore process_init_sema;
+	/*Semaphore utalized from last project, salvaged*/
+	struct semaphore process_wait_sema;
+	/*=============== MEMBERS FOR PROCESS CREATION AND SYNC ===============*/
 };
 /*=========================== END PA3 ADDED CODE ===========================*/
 

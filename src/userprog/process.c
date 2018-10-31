@@ -1,4 +1,5 @@
 #include "userprog/process.h"
+#include "userprog/syscall.h"
 #include <debug.h>
 #include <inttypes.h>
 #include <round.h>
@@ -47,6 +48,8 @@ process_execute (const char *args_line)
   char *save_ptr = NULL;  //PA2 ADDED
   tid_t tid;
 
+  struct process_control_block *new_pcb = NULL; //PA3 ADDED
+
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   args_copy = palloc_get_page (0);
@@ -63,31 +66,76 @@ process_execute (const char *args_line)
   file_name = strtok_r(file_name, " ", &save_ptr);
   /*=========================== END PA2 ADDED CODE ===========================*/
 
+  /*============================= PA3 ADDED CODE =============================*/
+  new_pcb = palloc_get_page(0);
+  if (new_pcb == NULL) {
+    if(args_copy) palloc_free_page (args_copy);
+    if(file_name) palloc_free_page (file_name);
+    if(new_pcb) palloc_free_page (new_pcb);
+    return PID_ERROR;
+  }
+
+  /*Start setting up the process_control_block for the new process*/
+  new_pcb->pid = PID_INIT;
+  new_pcb->exit_status = -1;
+  new_pcb->cmd_line = args_copy;
+  new_pcb->parent = thread_current();
+  new_pcb->parent_waiting = false;
+  new_pcb->child_exit = false;
+  new_pcb->orphan_flag = false;
+
+  sema_init(&new_pcb->process_init_sema, 0);
+  sema_init(&new_pcb->process_wait_sema, 0);
+
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, args_copy);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, new_pcb);
 
-  if (tid == TID_ERROR)
+  if (tid == TID_ERROR) {
+    if(args_copy) palloc_free_page (args_copy);
+    if(file_name) palloc_free_page (file_name);
+    if(new_pcb) palloc_free_page (new_pcb);
+    return PID_ERROR;
+  }
+
+  /*Wait for new process initialization to be complete in start_process*/
+  sema_down(&new_pcb->process_init_sema);
+  if(args_copy) {
     palloc_free_page (args_copy);
+  }
 
-  return tid;
+  /*If successfully made it here, then there is a new child process*/
+  if(new_pcb->pid >= 0) {
+    list_push_back (&(thread_current()->child_list), &(new_pcb->child_elem));
+  }
+
+  palloc_free_page (file_name);
+
+  return new_pcb->pid;
+  /*=========================== END PA3 ADDED CODE ===========================*/
 }
 
 /* A thread function that loads a user process and starts it
-   running. */
+  running. */
 static void
-start_process (void *file_name_)
+start_process (void *new_pcb_)
 {
-  char *file_name = file_name_;
+  /*============================= PA3 ADDED CODE =============================*/
+  struct thread *cur = thread_current(); /*pnt to the current thread*/
+  struct process_control_block *pcb_ptr = new_pcb_; /*ptr to passed pcb*/
+  char *file_name = (char *) pcb_ptr->cmd_line; /*string passed through pcb*/
+  /*=========================== END PA3 ADDED CODE ===========================*/
+
   /*token and save_ptr are required for strtok_r()*/
   char *token = NULL;     //PA2 ADDED
   char *save_ptr = NULL;  //PA2 ADDED
   int argc = 0;           //PA2 ADDED
   struct intr_frame if_;
-  bool success;
+  bool success = false;
 
   /*============================= PA2 ADDED CODE =============================*/
   /* Break apart the passed "file_name" parameters into individual tokens.
      argv[0] should always be the program to be executed. */
+  /* GEFF NOTE: WORKS FOR PA3 AND DOES NOT NEED TO BE CHANGED*/
   const char **argv = (const char**) palloc_get_page(0);
   if (argv == NULL){
     printf("ERROR: Able to load Elf, but not enough memory to push arguments!");
@@ -99,6 +147,7 @@ start_process (void *file_name_)
     argv[argc++] = token;
   }
 /*=========================== END PA2 ADDED CODE ===========================*/
+
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -106,18 +155,31 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (argv[0], &if_.eip, &if_.esp);
 
-  /*============================= PA2 ADDED CODE =============================*/
-  if (!success) {
-    /* If load failed, quit. */
-    palloc_free_page (file_name);
-    palloc_free_page (argv);
-    thread_exit ();
-  }
-  else {
+  /*============================= PA3 ADDED CODE =============================*/
+  if (success) {
     /*Push arguments to the stack*/
     push_args (argv, argc, &if_.esp);
   }
-  /*=========================== END PA2 ADDED CODE ===========================*/
+  else {
+    palloc_free_page (argv);
+    exit (-1);
+  }
+  palloc_free_page (argv);
+
+  /*Process, in theory, successfully created, need to assign PID
+  Which in PintOS 1 to 1 mapping is the TID*/
+  if(success){
+    pcb_ptr->pid = (pid_t)(cur->tid);
+  }
+  else {
+    pcb_ptr->pid = PID_ERROR;
+  }
+  /*Assign the current thread's pcb to the created pcb*/
+  cur->pcb = pcb_ptr;
+
+  /*wait for the process to be initialized*/
+  sema_up(&pcb_ptr->process_init_sema);
+  /*=========================== END PA3 ADDED CODE ===========================*/
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -139,15 +201,66 @@ start_process (void *file_name_)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED)
+process_wait (tid_t child_tid)
 {
   /*=========================== PA3 MODIFIED CODE ============================*/
+  /*retrieve a pointer to the calling thread*/
+  struct thread *cur_thread = thread_current();
+  /*retrieve a pointer to the calling thread's child list*/
+  struct list *cur_child_list = &(cur_thread->child_list);
+  /*used to search the cur_child_list*/
+  struct list_elem *child_member = NULL;
+  /*if a correct child is found, this will hold it's pcb*/
+  struct process_control_block *child_pcb = NULL;
 
-  /* TODO: LOOK INTO MODIFYING IMPLEMENTATION OF LINE BELOW 
-     member PROCESS_WAIT_SEMA COMMENTED OUT IN THREAD.H  
-     ACCORDING TO PA3 WRITE-UP WILL UTILIZE SYSCALL->WAIT  */
-  sema_down(&thread_current()->process_wait_sema);
-  return 0;
+  /*Seach through the child list of cur_thread and see is a child exists of
+  child_tid. Again, mapping is 1 to 1 so tid == pid*/
+  if (!list_empty(cur_child_list)) {
+    for (child_member = list_front(cur_child_list); child_member != list_end(cur_child_list); child_member = list_next(child_member)) {
+      /*Get the current child's pcb and check it.*/
+      struct process_control_block *pcb = list_entry(
+          child_member, struct process_control_block, child_elem);
+      if(pcb->pid == child_tid) { 
+        /*if child is found, assign and break search*/
+        child_pcb = pcb;
+        break;
+      }
+    }
+  }
+
+  /*Handle project doc exceptions:
+  1) Child is not a direct child of the caller, and so child_pcb is still NULL
+  2) child is already being waited upon
+  Both of these conditions cause an automatic return of -1*/
+  if (child_pcb == NULL) {
+    return -1;
+  }
+  else if (child_pcb->parent_waiting == true) {
+    return -1;
+  }
+  else {
+    child_pcb->parent_waiting = true;
+  }
+
+  /*If the child has yet to exit block on the process wait semaphore*/
+  if (! child_pcb->child_exit) {
+    sema_down(&child_pcb->process_wait_sema);
+  }
+
+  /*At this point it is assumed the child has exited*/
+  ASSERT (child_pcb->child_exit == true);
+
+  /*Remove this child from caller's child list*/
+  ASSERT (child_member != NULL);
+  list_remove (child_member);
+
+  /*By project doc, exit status must always be returned*/
+  int exit_status = child_pcb->exit_status;
+
+  /*Free memory of child_pcb*/
+  palloc_free_page(child_pcb);
+
+  return exit_status;
   /*=========================== END PA3 ADDED CODE ===========================*/
 }
 
@@ -158,10 +271,33 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
   /*=========================== PA3 MODIFIED CODE ============================*/
-  /* TODO: LOOK INTO MODIFYING IMPLEMENTATION OF LINE BELOW 
-     member PROCESS_WAIT_SEMA COMMENTED OUT IN THREAD.H  */
-  if (&cur->parent != NULL) {
-    sema_up(&cur->parent->process_wait_sema);
+  /*If this process had children all of the child resources need to be
+  cleaned up*/
+  struct list *child_list = &cur->child_list;
+  while (!list_empty(child_list)) {
+    struct list_elem *cur_child = list_pop_front (child_list);
+    struct process_control_block *pcb;
+    pcb = list_entry(cur_child, struct process_control_block, child_elem);
+    /*If the process has exited it can be freed*/
+    if (pcb->child_exit == true) {
+      palloc_free_page (pcb);
+    } else {
+    /*child is orphaned*/
+      pcb->orphan_flag = true;
+      pcb->parent = NULL;
+    }
+  }
+
+  /*With children handled it's time to exit the current process.
+  Also check the current processes status as an orphan for resource
+  freeing. signal to waiting processes that this process is now exiting.*/
+  cur->pcb->child_exit = true;
+  bool cur_orphan = cur->pcb->orphan_flag;
+  sema_up (&cur->pcb->process_wait_sema);
+
+  /*if orphan status confirmed than free process control block*/
+  if (cur_orphan) {
+    palloc_free_page (&cur->pcb);
   }
   /*=========================== END PA3 ADDED CODE ===========================*/
 
