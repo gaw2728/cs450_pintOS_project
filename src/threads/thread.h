@@ -6,7 +6,8 @@
 #include <stdint.h>
 /*PA1 ADDED: for semaphore stuff*/
 #include "threads/synch.h"
-
+/*PA3 ADDED: for process_control_block*/
+#include "userprog/process.h"
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -112,9 +113,9 @@ struct thread
     line 474.
 
     Semaphore recycled to handle process_wait*/
-    //struct semaphore process_wait_sema;
+    struct semaphore process_wait_sema;
     /* bool call_success; */
-    //struct thread *parent;
+    struct thread *parent;
     //int exit_status; /* holds the exit status */
   /*=========================== END PA2 ADDED CODE ===========================*/
 #ifdef USERPROG
@@ -123,7 +124,7 @@ struct thread
     /*============================= PA3 ADDED CODE =============================*/
     /* New process control block struct for PA3, renders above PA2 members
     defunct. */
-    struct process_control_block pcb;
+    struct process_control_block *pcb;
     /*=========================== END PA3 ADDED CODE ===========================*/
 #endif
 

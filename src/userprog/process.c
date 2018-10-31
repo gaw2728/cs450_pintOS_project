@@ -39,7 +39,7 @@ static void push_args (const char *[], int cnt, void **esp);
 
    2)"fn_copy" has been changed to hold a copy of all arguments passed
    and so has been changed to "args_copy"*/
-tid_t
+pid_t
 process_execute (const char *args_line)
 {
   char *args_copy = NULL; //PA2 CHANGED
@@ -158,12 +158,11 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
   /*=========================== PA3 MODIFIED CODE ============================*/
-  /* prints exit status */
-  printf("%s: exit(%d)\n", cur->name, cur->pcb->exit_status); /* Modified */
-
   /* TODO: LOOK INTO MODIFYING IMPLEMENTATION OF LINE BELOW 
      member PROCESS_WAIT_SEMA COMMENTED OUT IN THREAD.H  */
-  sema_up(&thread_current()->parent->process_wait_sema);
+  if (&cur->parent != NULL) {
+    sema_up(&cur->parent->process_wait_sema);
+  }
   /*=========================== END PA3 ADDED CODE ===========================*/
 
   /* Destroy the current process's page directory and switch back

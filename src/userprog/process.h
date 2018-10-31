@@ -2,12 +2,6 @@
 #define USERPROG_PROCESS_H
 
 #include "threads/thread.h"
-
-tid_t process_execute (const char *file_name);
-int process_wait (tid_t);
-void process_exit (void);
-void process_activate (void);
-
 /*============================= PA3 ADDED CODE =============================*/
 /* This new struct PCB is to clarify data members belonging to processes that
 the kernel will use for process syncronization, control, etc. 
@@ -27,12 +21,16 @@ a pcb, it simply will not be utalized by the kernel.
 
 4) For our projects process mapping is 1 to 1 therefore tid == pid && 
 pid == tid and should be set as such. */
+typedef int pid_t;
 
-typedef int pid_t; /* Definition of a pit_t */
+pid_t process_execute (const char *file_name);
+int process_wait (pid_t);
+void process_exit (void);
+void process_activate (void);
 
 struct process_control_block
 {
-	pid_t  pid;       /* Process ID num */
+	pid_t pid;       /* Process ID num */
 	int exit_status;  /* Process exit status migrated from PA2 */
 	/* List of children associated with this process */
 	struct list child_list;      /* TODO Determine location */
