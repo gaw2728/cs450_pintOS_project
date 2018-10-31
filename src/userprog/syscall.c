@@ -25,7 +25,7 @@ void syscall_init(void) {
 
 /* Get stack arguments and make system calls */
 static void syscall_handler(struct intr_frame *f) {
-  /******************** PA2 ADDED CODE ********************/
+  /******************** PA3 MODIFIED CODE ********************/
   /* Holds the stack arguments that directly follow the system call. */
   int args[3];
   int *sys_call = f->esp;
@@ -34,13 +34,42 @@ static void syscall_handler(struct intr_frame *f) {
   void *buffer_page_ptr;
 
   switch (*sys_call) {
+
+  case SYS_HALT:
+    /*TODO: SYSCALL HALT HANDLER*/
+    break;
+
   case SYS_EXIT:
     // get the arguments
     get_arguments(f, &args[0], 1);
     // exit the program
     exit(args[0]);
     break;
-    /**/
+
+  case SYS_EXEC:
+    /*TODO: SYSCALL EXEC HANDLER*/
+    break;
+
+  case SYS_WAIT:
+    /*TODO SYSCALL WAIT HANDLER*/
+    break;
+
+  case SYS_CREATE:
+    /*TODO SYSCALL CREATE HANDLER*/
+    break;
+
+  case SYS_REMOVE:
+    /*TODO SYSCALL REMOVE HANDLER*/
+    break;
+
+  case SYS_OPEN:
+    /*TODO SYSCALL OPEN HANDLER*/
+    break;
+
+  case SYS_FILESIZE:
+    /*TODO SYSCALL FILESIZE HANDLER*/
+    break;
+  
   case SYS_READ:
     // get arguments
     get_arguments(f, &args[0], 3);
@@ -69,6 +98,7 @@ static void syscall_handler(struct intr_frame *f) {
     f->eax = read(args[0], (void *)args[1], (unsigned)args[2]);
 
     break;
+
   case SYS_WRITE:
     get_arguments(f, &args[0], 3);
     // variable for holding buffer
@@ -97,10 +127,24 @@ static void syscall_handler(struct intr_frame *f) {
     f->eax = write(args[0], (const void *)args[1], (unsigned)args[2]);
 
     break;
+
+  case SYS_SEEK:
+    /*TODO SYSCALL SEEK HANDLER*/
+    break;
+
+  case SYS_TELL:
+    /*TODO SYSCALL TELL HANDLER*/
+    break;
+
+  case SYS_CLOSE:
+    /*TODO SYSCALL CLOSE HANDLER*/
+    break;
+
   default:
     exit(-1);
     break;
-    /******************** END PA2 ADDED CODE ********************/
+
+    /******************** END PA3 ADDED CODE ********************/
   }
 }
 
@@ -111,7 +155,7 @@ void exit(int status) {
   /* GEFF'S NOTE: STATUS HERE IS SET PROPERLY.
   THE EXIT MESSAGE PRINTOUT HANDLED IN
   PROCESS.C->PROCESS_EXIT*/
-  thread_current()->exit_status = status;
+  thread_current()->pcb->exit_status = status;
   thread_exit();
 }
 
