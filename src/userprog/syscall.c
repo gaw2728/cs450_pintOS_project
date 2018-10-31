@@ -1,11 +1,12 @@
-#include "userprog/syscall.h"
 #include "devices/input.h"
+#include "devices/shutdown.c"
 #include "list.h"
 #include "process.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
+#include "userprog/syscall.h"
 #include <console.h>
 #include <stdio.h>
 #include <syscall-nr.h>
@@ -36,7 +37,8 @@ static void syscall_handler(struct intr_frame *f) {
   switch (*sys_call) {
 
   case SYS_HALT:
-    /*TODO: SYSCALL HALT HANDLER*/
+    /*"Halts" the system, shutting it down*/
+    shutdown_power_off(); /*pintos/src/devices/shutdown.c*/
     break;
 
   case SYS_EXIT:
