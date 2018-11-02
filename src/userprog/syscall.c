@@ -19,8 +19,10 @@ struct lock filesys;
 static void syscall_handler(struct intr_frame *);
 
 void get_arguments(struct intr_frame *f, int *args, int num_of_args);
+int user_to_kernel_ptr(const void *vaddr);
 void check_address(const void *ptr_to_check);
-void exit(int status);
+void sys_exit(int status);
+pid_t exec (const char *cmd_line);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
 void mem_access_failure(void); //called to release lock and exit
@@ -45,6 +47,8 @@ static void syscall_handler(struct intr_frame *f) {
   /*Result currently used in sys_exec & sys_wait*/
   int result;
 
+  check_address((void *)f->esp);
+  
   switch (*sys_call) {
 
   case SYS_HALT:
@@ -56,29 +60,21 @@ static void syscall_handler(struct intr_frame *f) {
     // get the arguments
     get_arguments(f, &args[0], 1);
     // exit the program
-    exit(args[0]);
+    sys_exit(args[0]);
     break;
 
   case SYS_EXEC:
-    /*Below retrives the cmd_line to create the process*/
     get_arguments(f, &args[0], 1);
-    char *cmd_line = (char *) args[0];
-    /*Check for valid pointer*/
-    check_address((const void *) cmd_line);
-    /*CRITICAL SECTION*/
-    lock_acquire(&filesys);
-    result = (int) process_execute(cmd_line);
-    lock_release(&filesys);
-    /*END CRITICAL SECTION*/
-    f->eax = (uint32_t) result;
+    args[0] = user_to_kernel_ptr((const void *) args[0]);
+    result = exec((const char *) args[0]);
+    f->eax = result; 
     break;
 
   case SYS_WAIT:
     /*Below retrieves the pid that the process is waiting on.*/
     get_arguments(f, &args[0], 1);
-    int *pid = (int *) args[0];
-    check_address((const void *) pid);
-    result = (int) process_wait(*pid);
+    int pid = (int) args[0];
+    result = (int) process_wait(pid);
     f->eax = (uint32_t) result;
     break;
 
@@ -116,7 +112,7 @@ static void syscall_handler(struct intr_frame *f) {
         pagedir_get_page(thread_current()->pagedir, (const void *)args[1]);
     // checking for valid buffer
     if (buffer_page_ptr == NULL) {
-      exit(-1);
+      sys_exit(-1);
     }
 
     // assign page ptr to buffer
@@ -144,7 +140,7 @@ static void syscall_handler(struct intr_frame *f) {
         pagedir_get_page(thread_current()->pagedir, (const void *)args[1]);
     // checking for valid buffer
     if (buffer_page_ptr == NULL) {
-      exit(-1);
+      sys_exit(-1);
     }
 
     // assign page ptr to buffer
@@ -169,7 +165,8 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   default:
-    exit(-1);
+    //printf("EXIT CALLED IN DEFAULT\n");
+    sys_exit(-1);
     break;
 
     /******************** END PA3 ADDED CODE ********************/
@@ -178,28 +175,30 @@ static void syscall_handler(struct intr_frame *f) {
 
 /******************** PA3 MODIFIED CODE ********************/
 
-/*Called in cases of invalid memory access to free lock if 
-needed and exit*/
-void mem_access_failure(void) {
-  if (lock_held_by_current_thread(&filesys))
-    lock_release (&filesys);
-
-  exit (-1);
-}
-
 /**
  * Exit program
  */
-void exit(int status) {
+void sys_exit(int status) {
   /*PA3 MODIFIED*/
   /*Print exiting first*/
-  printf("%s: exit(%d)\n", thread_current()->name, status);
+  printf("%s: exit(%d)\n",thread_current()->name, status);
   /*Retrieve pointer to PCB and set exit_status*/
   struct process_control_block *pcb = thread_current()->pcb;
   if(pcb != NULL){
   pcb->exit_status = status;
   }
   thread_exit();
+}
+
+/*
+  Implementation for exec
+*/
+pid_t exec (const char *cmd_line)
+{
+  lock_acquire(&filesys);
+  pid_t pid = process_execute(cmd_line);
+  lock_release(&filesys);
+  return pid;
 }
 
 /**
@@ -236,12 +235,42 @@ int write(int fd, const void *buffer, unsigned size) {
 void check_address(const void *check_ptr) {
   /* If the address is not within the bounds of user memory or equal
      to null, exit the program with a status of -1.
-   */
-  if (!is_user_vaddr(check_ptr) || check_ptr == NULL ||
-      check_ptr < (void *)0x08048000) {
+
+     is_user_vaddr is PintOS built-in that returns T iff check_ptr < PHYS_BASE
+     pointer should not be null
+     ask BUCHHOLZ about last param*/
+  if (check_ptr == NULL || !is_user_vaddr(check_ptr) ||
+    check_ptr < (void *)0x08048000) {
     /* Terminate the program */
     mem_access_failure();
   }
+}
+
+/*Called in cases of invalid memory access to free lock if 
+needed and exit*/
+void mem_access_failure(void) {
+  if (lock_held_by_current_thread(&filesys)){
+    lock_release (&filesys);
+  }
+  //printf("EXIT CALLED IN MEM_ACCESS_FAILURE\n");
+  sys_exit(-1);
+}
+
+/*
+  Used in processes like exec to varify that a user pointer is
+  good, then translate it into a kernel pointer.
+*/
+int user_to_kernel_ptr(const void *vaddr)
+{
+  // TODO: Need to check if all bytes within range are correct
+  // for strings + buffers
+  check_address(vaddr);
+  void *ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
+  if (!ptr)
+    {
+      mem_access_failure();
+    }
+  return (int) ptr;
 }
 
 /* Get the arguments off the stack and store them in a pointer array.
@@ -255,4 +284,5 @@ void get_arguments(struct intr_frame *f, int *args, int num_args) {
     args[i] = *arg_ptr;
   }
 }
+
 /******************** END PA3 ADDED CODE ********************/

@@ -138,8 +138,7 @@ start_process (void *new_pcb_)
   /* GEFF NOTE: WORKS FOR PA3 AND DOES NOT NEED TO BE CHANGED*/
   const char **argv = (const char**) palloc_get_page(0);
   if (argv == NULL){
-    printf("ERROR: Able to load Elf, but not enough memory to push arguments!");
-    success = false;
+    goto loadfail;
   }
   for (token = strtok_r(file_name, " ", &save_ptr); token != NULL;
       token = strtok_r(NULL, " ", &save_ptr))
@@ -160,10 +159,6 @@ start_process (void *new_pcb_)
     /*Push arguments to the stack*/
     push_args (argv, argc, &if_.esp);
   }
-  else {
-    palloc_free_page (argv);
-    exit (-1);
-  }
   palloc_free_page (argv);
 
   /*Process, in theory, successfully created, need to assign PID
@@ -172,6 +167,7 @@ start_process (void *new_pcb_)
     pcb_ptr->pid = (pid_t)(cur->tid);
   }
   else {
+loadfail:
     pcb_ptr->pid = PID_ERROR;
   }
   /*Assign the current thread's pcb to the created pcb*/
@@ -179,6 +175,9 @@ start_process (void *new_pcb_)
 
   /*wait for the process to be initialized*/
   sema_up(&pcb_ptr->process_init_sema);
+  if(!success){
+    sys_exit(-1);
+  }
   /*=========================== END PA3 ADDED CODE ===========================*/
 
   /* Start the user process by simulating a return from an
@@ -241,7 +240,6 @@ process_wait (tid_t child_tid)
   else {
     child_pcb->parent_waiting = true;
   }
-
   /*If the child has yet to exit block on the process wait semaphore*/
   if (! child_pcb->child_exit) {
     sema_down(&child_pcb->process_wait_sema);

@@ -1,0 +1,204 @@
+            +----------------------------+
+       	    |          CS 450            |
+            |   PROJECT 3: SYSTEM CALLS  |
+            |      DESIGN DOCUMENT     	 |
+            +----------------------------+
+
+---- GROUP ----
+
+>> Fill in the names and email addresses of your group members.
+
+Geoffrey Wright <wrigh2ga@dukes.jmu.edu>
+
+---- PRELIMINARIES ----
+
+>> If you have any preliminary comments on your submission, please give 
+>> them here.
+
+>> Please cite any offline or online sources you consulted while
+>> preparing your submission, other than the Pintos documentation, course
+>> text, lecture notes, and course staff.
+
+			     SYSTEM CALLS
+			   ================
+
+---- DATA STRUCTURES ----
+
+>> A1: Copy here the declaration of each new or changed `struct' or
+>> `struct' member, global or static variable, `typedef', or
+>> enumeration.  Identify the purpose of each in 25 words or less.
+
+process.h
+	struct process_control_block (NEW): Structure to hold data items
+	and sync measures for processess.
+		->pid_t pid: process's unique ID, 1 to 1 with tid.
+
+		->int exit_status: Process' exit status migrated from PA2.
+
+		->const char* cmd_line: added for new process_execute methodology.
+		Executable line passed through pcb.
+
+		->struct thread *parent: pointer to this thread's parent thread.
+
+		->struct list_elem child_elem: child List element for thread's
+		child_list.
+
+		->bool parent_waiting: to show that a parent is waiting on this
+		child.
+
+		->bool child_exit: to notify a process that a child has exited.
+
+		->bool orphan_flag: to tell if a child process is orphaned.
+
+		->struct semaphore process_init_sema: semaphore used to control
+		waiting for a process to be loaded between process_execute and
+		start_process.
+
+		->struct semaphore process_wait_sema: used for parental waiting
+		for a child to exit.
+
+	typedef int pid_t: Process ID.
+
+	#define PID_ERROR ((pid_t) -1): To notify failure.
+
+	#define PID_INIT  ((pid_t) -2): To notify not yet initialized.
+
+threads.h
+	struct thread
+		->struct process_control_block pcb: process control block for
+		a process tied to a kernel thread.
+
+		->struct list child_list: a list of child processes for a process
+		maintained by a kernel thread.
+
+syscall.c
+	struct lock filesys: A lock to control access to the file system.
+
+
+>> A2: Describe how file descriptors are associated with open files.
+>> Are file descriptors unique within the entire OS or just within a
+>> single process?
+
+/******************************************************************/
+TODO BY FILE CREATING AND MODIFYING SYSCALLS
+/******************************************************************/
+
+---- ALGORITHMS ----
+
+>> A3: Describe your code for reading and writing user data from the
+>> kernel.
+
+/******************************************************************/
+TODO DISCUSS WITH GROUP
+/******************************************************************/
+
+>> A4: Briefly describe your implementation of the "wait" system call
+>> and how it interacts with process termination.
+
+The wait syscall, as implemented, calls process_wait in process.c
+where the majority of the logic is implemented. There the calling
+thread's child list is itterated over grabbing the PCB's of every
+child if children are present in the list. When a PCB->PID is found
+that matched the process to be waited on it breaks the search. The
+seach will end if the list is empty or if no appropriate child is
+found as well.
+
+After this step checks are performed if the PCB pointer is null or 
+if the caller has already declaired waiting status on the subject.
+If everything proceeds successfully the caller declaires that it is
+waiting on the child and if the child has not yet exited, blocks on
+the child's PBC->process_wait_sema.
+
+When the semaphore is signaled and the parent wakes up it removes
+the child process from it's child list, grabs the child's exit
+status, and frees the child's PCB from memory. The child's exit status
+is returned.
+
+>> A5: Any access to user program memory at a user-specified address
+>> can fail due to a bad pointer value.  Such accesses must cause the
+>> process to be terminated.  System calls are fraught with such
+>> accesses, e.g. a "write" system call requires reading the system
+>> call number from the user stack, then each of the call's three
+>> arguments, then an arbitrary amount of user memory, and any of
+>> these can fail at any point.  This poses a design and
+>> error-handling problem: how do you best avoid obscuring the primary
+>> function of code in a morass of error-handling?  Furthermore, when
+>> an error is detected, how do you ensure that all temporarily
+>> allocated resources (locks, buffers, etc.) are freed?  In a few
+>> paragraphs, describe the strategy or strategies you adopted for
+>> managing these issues.  Give an example.
+
+We developed a slew of helper functions to verify user imput and
+terminate offending accesses. They are check_address,
+mem_access_failure, user_to_kernel_ptr, get_arguments.
+
+*get_arguments attempts to read off items from the user stack. This
+function calls check_address on each item to see if the item is NULL,
+a valid user virtual address, and not outside the bounds of user memory.
+check_address will call mem_access_failure if an invalid pointer is found
+releasing held locks and terminating the thread.
+	Call Order: [get_arguments->check_address->mem_access_failure]
+
+*Simmilary user_to_kernel_ptr tries check the pointer of a given
+argument like the one passed to exec and then get a kernel pointer
+for the item. Similarly the call order is as follows:
+	Call Order: [user_to_kernel_ptr->check_address->mem_access_failure]
+
+---- SYNCHRONIZATION ----
+
+>> A6: The "exec" system call returns -1 if loading the new executable
+>> fails, so it cannot return before the new executable has completed
+>> loading.  How does your code ensure this?  How is the load
+>> success/failure status passed back to the thread that calls "exec"?
+
+To handle this process_execute allocates page memory to create a new
+PCB for a soon to be created process and initializes all of its 
+members indicated in [A1] key member for loading being
+process_init_sema. After the call to thread_create the parent
+creating process will decrement this new PCB->process_init_sema
+waiting for the child to load and signal on this semaphore that it
+has finished loading. If the signaling and load is successful it adds
+the new child process to it's child list. If load was not successful
+the parent is still signaled but is returned a PID_ERROR.
+
+In essence the pid value returned denotes success or failure. Also,
+however, if a load attempt fails, the thread will be exited. This
+will go through the procedure of setting the child_exit and
+orphan_flag appropriately, supplying the exec caller with appropriate
+information.
+
+>> A7: Consider parent process P with child process C.  How do you
+>> ensure proper synchronization and avoid race conditions when P
+>> calls wait(C) before C exits?  After C exits?  How do you ensure
+>> that all resources are freed in each case?  How about when P
+>> terminates without waiting, before C exits?  After C exits?  Are
+>> there any special cases?
+
+Process control blocks are allocated in memory and are not neccesarily
+removed immediately. If there is a waiter than the PCB of that child is
+preserved ultil the waiter can glean appropriate intormation and free
+the child's PCB itself. If a waiter is wating on a process it is also
+signaled that the child has exited on the child's process_wait_sema.
+All resources are released for a process when it makes a call to sys_exit
+eventually making it's way to process_exit. In process_exit discriptors
+and other relevent items are freed. If P were to exit first there is an
+oprhan_flag to signal the need for the process's removal.
+
+GEFF: If there are special cases I am uncertain. As of 11/2/2018 all
+exec tests passing.
+
+---- RATIONALE ----
+
+>> A8: Why did you choose to implement access to user memory from the
+>> kernel in the way that you did?
+
+/******************************************************************/
+TODO DISCUSS WITH GROUP
+/******************************************************************/
+
+>> A9: What advantages or disadvantages can you see to your design
+>> for file descriptors?
+
+/******************************************************************/
+TODO BY FILE CREATING AND MODIFYING SYSCALLS
+/******************************************************************/

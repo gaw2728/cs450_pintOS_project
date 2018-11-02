@@ -23,8 +23,8 @@ a pcb, it simply will not be utalized by the kernel.
 4) For our projects process mapping is 1 to 1 therefore tid == pid && 
 pid == tid and should be set as such. */
 typedef int pid_t;
-#define PID_ERROR ((pid_t) -1)
-#define PID_INIT  ((pid_t) -2)
+#define PID_ERROR -1
+#define PID_INIT  -2
 
 pid_t process_execute (const char *file_name);
 int process_wait (pid_t);
