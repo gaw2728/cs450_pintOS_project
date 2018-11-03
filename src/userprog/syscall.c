@@ -21,7 +21,7 @@ struct lock filesys;
 /********************** PA3 ADDED CODE **********************/
 // holds general information about a file
 // TODO: CONSIDER REFACTORING FIELD NAMES
-struct process_file {
+struct open_file {
   struct file *file;     // filesys file pointer
   int fd;                // file descriptor
   struct list_elem elem; // represents this file in the file_list
@@ -34,8 +34,10 @@ int user_to_kernel_ptr(const void *vaddr);
 void check_address(const void *ptr_to_check);
 void sys_exit(int status);
 pid_t exec(const char *cmd_line);
+bool create(const char *file, unsigned initial_size);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
+struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
 /******************** END PA3 ADDED CODE ********************/
 
@@ -90,7 +92,9 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_CREATE:
-    /*TODO SYSCALL CREATE HANDLER*/
+    get_arguments(f, &args[0], 2);
+    args[0] = user_to_kernel_ptr((const void *)args[0]);
+    f->eax = create((const char *)args[0], (unsigned)args[1]);
     break;
 
   case SYS_REMOVE:
@@ -212,33 +216,103 @@ pid_t exec(const char *cmd_line) {
 }
 
 /**
+ * Creates a new file in the file system
+ */
+bool create(const char *file, unsigned initial_size) {
+  bool success;
+
+  lock_acquire(&filesys);
+  success = filesys_create(file, initial_size);
+  lock_release(&filesys);
+
+  return success;
+}
+
+/**
  * Read into a buffer
  */
 int read(int fd, void *buffer, unsigned size) {
   int i;
-  char *buf = (char *)buffer;
+  int bytes_read;
+  char *buf;
+  struct file *f;
+
   // use the input fd
   if (fd == 0) {
+    buf = (char *)buffer;
     // fill the buffer with user input
     for (i = 0; i < (int)size; i++) {
       buf[i] = input_getc();
     }
-
     return i;
   }
 
-  return 0;
+  lock_acquire(&filesys);
+
+  // get the correct file and check if it's valid (in file system)
+  if (!(f = get_file(fd))) {
+    lock_release(&filesys);
+    return -1;
+  }
+
+  // read from the given file and into a buffer
+  // and record the number of bytes read
+  bytes_read = file_read(f, buffer, size);
+
+  lock_release(&filesys);
+
+  return bytes_read;
 }
 
 /**
  * Write from a buffer
  */
 int write(int fd, const void *buffer, unsigned size) {
+  int bytes_written;
+  struct file *f;
+
   if (fd == 1) {
     putbuf(buffer, size);
     return size;
   }
-  return 0;
+
+  lock_acquire(&filesys);
+
+  // get the correct file and check if it's valid (in file system)
+  if (!(f = get_file(fd))) {
+    lock_release(&filesys);
+    return -1;
+  }
+
+  // write to the given file from a buffer
+  // and record the number of bytes written
+  bytes_written = file_write(f, buffer, size);
+
+  lock_release(&filesys);
+
+  return bytes_written;
+}
+
+/*<==================== HELPER FUNCTIONS ====================> */
+
+/**
+ * Retrieve the file associated with the given fd.
+ */
+struct file *get_file(int fd) {
+  struct thread *t_cur = thread_current();
+  struct list_elem *e;
+
+  // navigate through the list of open file descriptors
+  for (e = list_begin(&t_cur->file_list); e != list_end(&t_cur->file_list);
+       e = list_next(e)) {
+    struct open_file *f = list_entry(e, struct open_file, elem);
+
+    // check and return the matching file descriptor
+    if (fd == f->fd)
+      return f->file;
+  }
+
+  return NULL;
 }
 
 /* Determine if the given address is valid in user memory */
