@@ -35,6 +35,7 @@ void check_address(const void *ptr_to_check);
 void sys_exit(int status);
 pid_t exec(const char *cmd_line);
 bool create(const char *file, unsigned initial_size);
+int filesize (int fd);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
 struct file *get_file(int fd);
@@ -106,7 +107,11 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_FILESIZE:
-    /*TODO SYSCALL FILESIZE HANDLER*/
+  /*TODO Elliott: SYSCALL FILESIZE HANDLER, CHECK TO SEE IF WORKING*/
+
+    get_arguments(f, &args[0], 1);
+    int fd = (int)args[0];
+    f->eax = filesize (fd);
     break;
 
   case SYS_READ:
@@ -226,6 +231,28 @@ bool create(const char *file, unsigned initial_size) {
   lock_release(&filesys);
 
   return success;
+}
+
+/**
+* Returns the size of a file as the number of bytes
+*/
+int filesize(int fd) {
+  struct file *f;
+  int num_bytes;
+
+  lock_acquire(&filesys);
+
+  // get the correct file and check if it's valid (in file system)
+  if (!(f = get_file(fd))) {
+    lock_release(&filesys);
+    return -1;
+  }
+  //gets the size of a file in bytes
+  num_bytes = file_length(f);
+
+  lock_release(&filesys);
+
+  return num_bytes;
 }
 
 /**
