@@ -1,13 +1,13 @@
+#include "userprog/syscall.h"
 #include "devices/input.h"
 #include "devices/shutdown.h"
 #include "list.h"
 #include "process.h"
 #include "threads/interrupt.h"
+#include "threads/synch.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
-#include "userprog/syscall.h"
-#include "threads/synch.h"
 #include <console.h>
 #include <stdio.h>
 #include <syscall-nr.h>
@@ -16,21 +16,30 @@
 /*This lock is for protecting file system access*/
 struct lock filesys;
 
+/********************** PA3 ADDED CODE **********************/
+// holds general information about a file
+// TODO: CONSIDER REFACTORING FIELD NAMES
+struct process_file {
+  struct file *file;     // filesys file pointer
+  int fd;                // file descriptor
+  struct list_elem elem; // represents this file in the file_list
+};
+
 static void syscall_handler(struct intr_frame *);
 
 void get_arguments(struct intr_frame *f, int *args, int num_of_args);
 int user_to_kernel_ptr(const void *vaddr);
 void check_address(const void *ptr_to_check);
 void sys_exit(int status);
-pid_t exec (const char *cmd_line);
+pid_t exec(const char *cmd_line);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
-void mem_access_failure(void); //called to release lock and exit
+void mem_access_failure(void); // called to release lock and exit
 /******************** END PA3 ADDED CODE ********************/
 
 void syscall_init(void) {
   /********************** PA3 ADDED CODE **********************/
-  lock_init (&filesys);
+  lock_init(&filesys);
   /******************** END PA3 ADDED CODE ********************/
   intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
@@ -48,7 +57,7 @@ static void syscall_handler(struct intr_frame *f) {
   int result;
 
   check_address((void *)f->esp);
-  
+
   switch (*sys_call) {
 
   case SYS_HALT:
@@ -65,17 +74,17 @@ static void syscall_handler(struct intr_frame *f) {
 
   case SYS_EXEC:
     get_arguments(f, &args[0], 1);
-    args[0] = user_to_kernel_ptr((const void *) args[0]);
-    result = exec((const char *) args[0]);
-    f->eax = result; 
+    args[0] = user_to_kernel_ptr((const void *)args[0]);
+    result = exec((const char *)args[0]);
+    f->eax = result;
     break;
 
   case SYS_WAIT:
     /*Below retrieves the pid that the process is waiting on.*/
     get_arguments(f, &args[0], 1);
-    int pid = (int) args[0];
-    result = (int) process_wait(pid);
-    f->eax = (uint32_t) result;
+    int pid = (int)args[0];
+    result = (int)process_wait(pid);
+    f->eax = (uint32_t)result;
     break;
 
   case SYS_CREATE:
@@ -93,7 +102,7 @@ static void syscall_handler(struct intr_frame *f) {
   case SYS_FILESIZE:
     /*TODO SYSCALL FILESIZE HANDLER*/
     break;
-  
+
   case SYS_READ:
     // get arguments
     get_arguments(f, &args[0], 3);
@@ -165,7 +174,7 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   default:
-    //printf("EXIT CALLED IN DEFAULT\n");
+    // printf("EXIT CALLED IN DEFAULT\n");
     sys_exit(-1);
     break;
 
@@ -181,11 +190,11 @@ static void syscall_handler(struct intr_frame *f) {
 void sys_exit(int status) {
   /*PA3 MODIFIED*/
   /*Print exiting first*/
-  printf("%s: exit(%d)\n",thread_current()->name, status);
+  printf("%s: exit(%d)\n", thread_current()->name, status);
   /*Retrieve pointer to PCB and set exit_status*/
   struct process_control_block *pcb = thread_current()->pcb;
-  if(pcb != NULL){
-  pcb->exit_status = status;
+  if (pcb != NULL) {
+    pcb->exit_status = status;
   }
   thread_exit();
 }
@@ -193,8 +202,7 @@ void sys_exit(int status) {
 /*
   Implementation for exec
 */
-pid_t exec (const char *cmd_line)
-{
+pid_t exec(const char *cmd_line) {
   lock_acquire(&filesys);
   pid_t pid = process_execute(cmd_line);
   lock_release(&filesys);
@@ -240,19 +248,19 @@ void check_address(const void *check_ptr) {
      pointer should not be null
      ask BUCHHOLZ about last param*/
   if (check_ptr == NULL || !is_user_vaddr(check_ptr) ||
-    check_ptr < (void *)0x08048000) {
+      check_ptr < (void *)0x08048000) {
     /* Terminate the program */
     mem_access_failure();
   }
 }
 
-/*Called in cases of invalid memory access to free lock if 
+/*Called in cases of invalid memory access to free lock if
 needed and exit*/
 void mem_access_failure(void) {
-  if (lock_held_by_current_thread(&filesys)){
-    lock_release (&filesys);
+  if (lock_held_by_current_thread(&filesys)) {
+    lock_release(&filesys);
   }
-  //printf("EXIT CALLED IN MEM_ACCESS_FAILURE\n");
+  // printf("EXIT CALLED IN MEM_ACCESS_FAILURE\n");
   sys_exit(-1);
 }
 
@@ -260,17 +268,15 @@ void mem_access_failure(void) {
   Used in processes like exec to varify that a user pointer is
   good, then translate it into a kernel pointer.
 */
-int user_to_kernel_ptr(const void *vaddr)
-{
+int user_to_kernel_ptr(const void *vaddr) {
   // TODO: Need to check if all bytes within range are correct
   // for strings + buffers
   check_address(vaddr);
   void *ptr = pagedir_get_page(thread_current()->pagedir, vaddr);
-  if (!ptr)
-    {
-      mem_access_failure();
-    }
-  return (int) ptr;
+  if (!ptr) {
+    mem_access_failure();
+  }
+  return (int)ptr;
 }
 
 /* Get the arguments off the stack and store them in a pointer array.
