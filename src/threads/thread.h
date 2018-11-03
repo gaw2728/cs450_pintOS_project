@@ -105,13 +105,21 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+
     /*============================= PA3 ADDED CODE =============================*/
     /* New process control block struct for PA3 */
     struct process_control_block *pcb;
     /* All threads will have a child list if needed*/
-    struct list child_list;       
-    /*=========================== END PA3 ADDED CODE ===========================*/
+    struct list child_list;
+
 #endif
+
+      // used for system calls relavent for the file system
+      struct list file_list;
+      // represents the number of file descriptors
+      // currently in use by the file system (excluding 0 and 1)
+      int fd;
+    /*=========================== END PA3 ADDED CODE ===========================*/
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
