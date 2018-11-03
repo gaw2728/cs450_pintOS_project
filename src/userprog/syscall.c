@@ -1,6 +1,8 @@
 #include "userprog/syscall.h"
 #include "devices/input.h"
 #include "devices/shutdown.h"
+#include "filesys/file.h"
+#include "filesys/filesys.h"
 #include "list.h"
 #include "process.h"
 #include "threads/interrupt.h"
