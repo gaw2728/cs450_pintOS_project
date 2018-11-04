@@ -38,6 +38,8 @@ bool create(const char *file, unsigned initial_size);
 int filesize (int fd);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
+void seek(int fd, unsigned position);
+unsigned tell(int fd);
 struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
 /******************** END PA3 ADDED CODE ********************/
@@ -107,11 +109,9 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_FILESIZE:
-  /*TODO Elliott: SYSCALL FILESIZE HANDLER, CHECK TO SEE IF WORKING*/
-
+  /*TODO Elliott: SYSCALL FILESIZE HANDLER, MAKE SURE IT WORKS*/
     get_arguments(f, &args[0], 1);
-    int fd = (int)args[0];
-    f->eax = filesize (fd);
+    f->eax = filesize((int)args[0]); //TODO Do I need to do this?
     break;
 
   case SYS_READ:
@@ -173,11 +173,16 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_SEEK:
-    /*TODO SYSCALL SEEK HANDLER*/
+    /*TODO Elliott: SYSCALL SEEK HANDLER, MAKE SURE IT WORKS*/
+    get_arguments(f, &args[0], 2);
+    //args[0] = fd, args[1] = position to seek to
+    seek((int)args[0], (unsigned)args[1]);
     break;
 
   case SYS_TELL:
-    /*TODO SYSCALL TELL HANDLER*/
+    /*TODO Elliott: SYSCALL TELL HANDLER, MAKE SURE IT WORKS*/
+    get_arguments(f, &args[0], 1);
+    f->eax = tell((int)args[0]); //args[0] = fd //TODO Do I need to set f->eax?
     break;
 
   case SYS_CLOSE:
@@ -318,6 +323,47 @@ int write(int fd, const void *buffer, unsigned size) {
   lock_release(&filesys);
 
   return bytes_written;
+}
+
+/**
+* Sets the current position in fd to position bytes from the start of fd
+* (Position of 0 is the file's start)
+*/
+void seek(int fd, unsigned position) {
+  struct file *f;
+
+  lock_acquire(&filesys);
+
+  // get the correct file and check if it's valid (in file system)
+  if (!(f = get_file(fd))) {
+    lock_release(&filesys);
+  } else {
+    //sets the current position in fd to position bytes from the start of fd
+    file_seek(f, position);
+    lock_release(&filesys);
+  }
+}
+
+/**
+* Returns the current position in fd as a byte offset from the
+* start of the file.
+*/
+unsigned tell(int fd) {
+  struct file *f;
+  unsigned position;
+
+  lock_acquire(&filesys);
+
+  // get the correct file and check if it's valid (in file system)
+  if (!(f = get_file(fd))) {
+    lock_release(&filesys);
+    return -1;
+  }
+  //sets the current position in fd to position bytes from the start of fd
+  position = file_tell(f);
+  lock_release(&filesys);
+
+  return position;
 }
 
 /*<==================== HELPER FUNCTIONS ====================> */
