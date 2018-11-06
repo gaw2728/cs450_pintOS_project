@@ -31,9 +31,9 @@ pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/sc-boundary-3 -a s
 perl -I../.. ../../tests/userprog/sc-boundary-3.ck tests/userprog/sc-boundary-3 tests/userprog/sc-boundary-3.result
 FAIL tests/userprog/sc-boundary-3
 Kernel panic in run: PANIC at ../../userprog/exception.c:100 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0xc0029dd6
+Call stack: 0xc0029df6
 Translation of call stack:
-0xc0029dd6: debug_panic (.../../lib/kernel/debug.c:38)
+0xc0029df6: debug_panic (.../../lib/kernel/debug.c:38)
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/halt -a halt -- -q  -f run halt < /dev/null 2> tests/userprog/halt.errors > tests/userprog/halt.output
 perl -I../.. ../../tests/userprog/halt.ck tests/userprog/halt tests/userprog/halt.result
 pass tests/userprog/halt
@@ -45,77 +45,19 @@ perl -I../.. ../../tests/userprog/create-normal.ck tests/userprog/create-normal 
 pass tests/userprog/create-normal
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/create-empty -a create-empty -- -q  -f run create-empty < /dev/null 2> tests/userprog/create-empty.errors > tests/userprog/create-empty.output
 perl -I../.. ../../tests/userprog/create-empty.ck tests/userprog/create-empty tests/userprog/create-empty.result
-FAIL tests/userprog/create-empty
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-empty) begin
-  create-empty: exit(-1)
-Differences in `diff -u' format:
-  (create-empty) begin
-- create-empty: exit(-1)
-+ (create-empty) create(""): 1
-+ (create-empty) end
-+ create-empty: exit(0)
-Acceptable output:
-  (create-empty) begin
-  (create-empty) create(""): 0
-  (create-empty) end
-  create-empty: exit(0)
-Differences in `diff -u' format:
-  (create-empty) begin
-- (create-empty) create(""): 0
-+ (create-empty) create(""): 1
-  (create-empty) end
-  create-empty: exit(0)
+pass tests/userprog/create-empty
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/create-null -a create-null -- -q  -f run create-null < /dev/null 2> tests/userprog/create-null.errors > tests/userprog/create-null.output
 perl -I../.. ../../tests/userprog/create-null.ck tests/userprog/create-null tests/userprog/create-null.result
-FAIL tests/userprog/create-null
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-null) begin
-  create-null: exit(-1)
-Differences in `diff -u' format:
-  (create-null) begin
-- create-null: exit(-1)
-+ (create-null) create(NULL): 0
-+ (create-null) end
-+ create-null: exit(0)
+pass tests/userprog/create-null
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/create-bad-ptr -a create-bad-ptr -- -q  -f run create-bad-ptr < /dev/null 2> tests/userprog/create-bad-ptr.errors > tests/userprog/create-bad-ptr.output
 perl -I../.. ../../tests/userprog/create-bad-ptr.ck tests/userprog/create-bad-ptr tests/userprog/create-bad-ptr.result
-FAIL tests/userprog/create-bad-ptr
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-bad-ptr) begin
-  create-bad-ptr: exit(-1)
-Differences in `diff -u' format:
-  (create-bad-ptr) begin
-- create-bad-ptr: exit(-1)
-+ (create-bad-ptr) create(0x20101234): 1
-+ (create-bad-ptr) end
-+ create-bad-ptr: exit(0)
+pass tests/userprog/create-bad-ptr
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/create-long -a create-long -- -q  -f run create-long < /dev/null 2> tests/userprog/create-long.errors > tests/userprog/create-long.output
 perl -I../.. ../../tests/userprog/create-long.ck tests/userprog/create-long tests/userprog/create-long.result
-FAIL tests/userprog/create-long
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-long) begin
-  (create-long) create("x..."): 0
-  (create-long) end
-  create-long: exit(0)
-Differences in `diff -u' format:
-  (create-long) begin
-- (create-long) create("x..."): 0
-+ (create-long) create("x..."): 1
-  (create-long) end
-  create-long: exit(0)
+pass tests/userprog/create-long
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/create-exists -a create-exists -- -q  -f run create-exists < /dev/null 2> tests/userprog/create-exists.errors > tests/userprog/create-exists.output
 perl -I../.. ../../tests/userprog/create-exists.ck tests/userprog/create-exists tests/userprog/create-exists.result
-FAIL tests/userprog/create-exists
-run: try to re-create quux.dat: FAILED
+pass tests/userprog/create-exists
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/create-bound -a create-bound -- -q  -f run create-bound < /dev/null 2> tests/userprog/create-bound.errors > tests/userprog/create-bound.output
 perl -I../.. ../../tests/userprog/create-bound.ck tests/userprog/create-bound tests/userprog/create-bound.result
 pass tests/userprog/create-bound
@@ -161,17 +103,18 @@ pass tests/userprog/close-bad-fd
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/read-normal -a read-normal -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run read-normal < /dev/null 2> tests/userprog/read-normal.errors > tests/userprog/read-normal.output
 perl -I../.. ../../tests/userprog/read-normal.ck tests/userprog/read-normal tests/userprog/read-normal.result
 FAIL tests/userprog/read-normal
-run: read of 239 bytes at offset 0 in "sample.txt" returned 0: FAILED
+run: read of 239 bytes at offset 0 in "sample.txt" returned 4294967295: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/read-bad-ptr -a read-bad-ptr -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run read-bad-ptr < /dev/null 2> tests/userprog/read-bad-ptr.errors > tests/userprog/read-bad-ptr.output
 perl -I../.. ../../tests/userprog/read-bad-ptr.ck tests/userprog/read-bad-ptr tests/userprog/read-bad-ptr.result
 pass tests/userprog/read-bad-ptr
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/read-boundary -a read-boundary -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run read-boundary < /dev/null 2> tests/userprog/read-boundary.errors > tests/userprog/read-boundary.output
 perl -I../.. ../../tests/userprog/read-boundary.ck tests/userprog/read-boundary tests/userprog/read-boundary.result
 FAIL tests/userprog/read-boundary
-run: read() returned 0 instead of 239: FAILED
+run: read() returned -1 instead of 239: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/read-zero -a read-zero -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run read-zero < /dev/null 2> tests/userprog/read-zero.errors > tests/userprog/read-zero.output
 perl -I../.. ../../tests/userprog/read-zero.ck tests/userprog/read-zero tests/userprog/read-zero.result
-pass tests/userprog/read-zero
+FAIL tests/userprog/read-zero
+run: read() returned -1 instead of 0: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/read-stdout -a read-stdout -- -q  -f run read-stdout < /dev/null 2> tests/userprog/read-stdout.errors > tests/userprog/read-stdout.output
 perl -I../.. ../../tests/userprog/read-stdout.ck tests/userprog/read-stdout tests/userprog/read-stdout.result
 pass tests/userprog/read-stdout
@@ -181,17 +124,18 @@ pass tests/userprog/read-bad-fd
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/write-normal -a write-normal -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run write-normal < /dev/null 2> tests/userprog/write-normal.errors > tests/userprog/write-normal.output
 perl -I../.. ../../tests/userprog/write-normal.ck tests/userprog/write-normal tests/userprog/write-normal.result
 FAIL tests/userprog/write-normal
-run: write() returned 0 instead of 239: FAILED
+run: write() returned -1 instead of 239: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/write-bad-ptr -a write-bad-ptr -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run write-bad-ptr < /dev/null 2> tests/userprog/write-bad-ptr.errors > tests/userprog/write-bad-ptr.output
 perl -I../.. ../../tests/userprog/write-bad-ptr.ck tests/userprog/write-bad-ptr tests/userprog/write-bad-ptr.result
 pass tests/userprog/write-bad-ptr
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/write-boundary -a write-boundary -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run write-boundary < /dev/null 2> tests/userprog/write-boundary.errors > tests/userprog/write-boundary.output
 perl -I../.. ../../tests/userprog/write-boundary.ck tests/userprog/write-boundary tests/userprog/write-boundary.result
 FAIL tests/userprog/write-boundary
-run: write() returned 0 instead of 239: FAILED
+run: write() returned -1 instead of 239: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/write-zero -a write-zero -p ../../tests/userprog/sample.txt -a sample.txt -- -q  -f run write-zero < /dev/null 2> tests/userprog/write-zero.errors > tests/userprog/write-zero.output
 perl -I../.. ../../tests/userprog/write-zero.ck tests/userprog/write-zero tests/userprog/write-zero.result
-pass tests/userprog/write-zero
+FAIL tests/userprog/write-zero
+run: write() returned -1 instead of 0: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/write-stdin -a write-stdin -- -q  -f run write-stdin < /dev/null 2> tests/userprog/write-stdin.errors > tests/userprog/write-stdin.output
 perl -I../.. ../../tests/userprog/write-stdin.ck tests/userprog/write-stdin tests/userprog/write-stdin.result
 pass tests/userprog/write-stdin
@@ -211,9 +155,9 @@ pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/exec-bound-2 -a ex
 perl -I../.. ../../tests/userprog/exec-bound-2.ck tests/userprog/exec-bound-2 tests/userprog/exec-bound-2.result
 FAIL tests/userprog/exec-bound-2
 Kernel panic in run: PANIC at ../../userprog/exception.c:100 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0xc0029dd6
+Call stack: 0xc0029df6
 Translation of call stack:
-0xc0029dd6: debug_panic (.../../lib/kernel/debug.c:38)
+0xc0029df6: debug_panic (.../../lib/kernel/debug.c:38)
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/exec-bound-3 -a exec-bound-3 -- -q  -f run exec-bound-3 < /dev/null 2> tests/userprog/exec-bound-3.errors > tests/userprog/exec-bound-3.output
 perl -I../.. ../../tests/userprog/exec-bound-3.ck tests/userprog/exec-bound-3 tests/userprog/exec-bound-3.result
 FAIL tests/userprog/exec-bound-3
@@ -235,11 +179,7 @@ perl -I../.. ../../tests/userprog/wait-twice.ck tests/userprog/wait-twice tests/
 pass tests/userprog/wait-twice
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/wait-killed -a wait-killed -p tests/userprog/child-bad -a child-bad -- -q  -f run wait-killed < /dev/null 2> tests/userprog/wait-killed.errors > tests/userprog/wait-killed.output
 perl -I../.. ../../tests/userprog/wait-killed.ck tests/userprog/wait-killed tests/userprog/wait-killed.result
-FAIL tests/userprog/wait-killed
-Kernel panic in run: PANIC at ../../userprog/exception.c:100 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0xc0029dd6
-Translation of call stack:
-0xc0029dd6: debug_panic (.../../lib/kernel/debug.c:38)
+pass tests/userprog/wait-killed
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/wait-bad-pid -a wait-bad-pid -- -q  -f run wait-bad-pid < /dev/null 2> tests/userprog/wait-bad-pid.errors > tests/userprog/wait-bad-pid.output
 perl -I../.. ../../tests/userprog/wait-bad-pid.ck tests/userprog/wait-bad-pid tests/userprog/wait-bad-pid.result
 pass tests/userprog/wait-bad-pid
@@ -249,7 +189,7 @@ pass tests/userprog/multi-recurse
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/multi-child-fd -a multi-child-fd -p ../../tests/userprog/sample.txt -a sample.txt -p tests/userprog/child-close -a child-close -- -q  -f run multi-child-fd < /dev/null 2> tests/userprog/multi-child-fd.errors > tests/userprog/multi-child-fd.output
 perl -I../.. ../../tests/userprog/multi-child-fd.ck tests/userprog/multi-child-fd tests/userprog/multi-child-fd.result
 FAIL tests/userprog/multi-child-fd
-run: read of 239 bytes at offset 0 in "sample.txt" returned 0: FAILED
+run: read of 239 bytes at offset 0 in "sample.txt" returned 4294967295: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/rox-simple -a rox-simple -- -q  -f run rox-simple < /dev/null 2> tests/userprog/rox-simple.errors > tests/userprog/rox-simple.output
 perl -I../.. ../../tests/userprog/rox-simple.ck tests/userprog/rox-simple tests/userprog/rox-simple.result
 FAIL tests/userprog/rox-simple
@@ -346,7 +286,7 @@ pass tests/userprog/no-vm/multi-oom
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/filesys/base/lg-create -a lg-create -- -q  -f run lg-create < /dev/null 2> tests/filesys/base/lg-create.errors > tests/filesys/base/lg-create.output
 perl -I../.. ../../tests/filesys/base/lg-create.ck tests/filesys/base/lg-create tests/filesys/base/lg-create.result
 FAIL tests/filesys/base/lg-create
-run: read of 512 bytes at offset 0 in "blargle" returned 0: FAILED
+run: read of 512 bytes at offset 0 in "blargle" returned 4294967295: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/filesys/base/lg-full -a lg-full -- -q  -f run lg-full < /dev/null 2> tests/filesys/base/lg-full.errors > tests/filesys/base/lg-full.output
 perl -I../.. ../../tests/filesys/base/lg-full.ck tests/filesys/base/lg-full tests/filesys/base/lg-full.result
 FAIL tests/filesys/base/lg-full
@@ -366,7 +306,7 @@ run: write 717 bytes at offset 0 in "nibble" failed: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/filesys/base/sm-create -a sm-create -- -q  -f run sm-create < /dev/null 2> tests/filesys/base/sm-create.errors > tests/filesys/base/sm-create.output
 perl -I../.. ../../tests/filesys/base/sm-create.ck tests/filesys/base/sm-create tests/filesys/base/sm-create.result
 FAIL tests/filesys/base/sm-create
-run: read of 512 bytes at offset 0 in "blargle" returned 0: FAILED
+run: read of 512 bytes at offset 0 in "blargle" returned 4294967295: FAILED
 pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/filesys/base/sm-full -a sm-full -- -q  -f run sm-full < /dev/null 2> tests/filesys/base/sm-full.errors > tests/filesys/base/sm-full.output
 perl -I../.. ../../tests/filesys/base/sm-full.ck tests/filesys/base/sm-full tests/filesys/base/sm-full.result
 FAIL tests/filesys/base/sm-full
@@ -397,10 +337,10 @@ FAIL tests/filesys/base/syn-write
 run: ((null)) write "stuff": FAILED
 ../../tests/make-grade ../.. results ../../tests/userprog/Grading | tee grade
 warning: test tests/userprog/exec-bound-2 doesn't count for grading
-warning: test tests/userprog/sc-boundary-3 doesn't count for grading
-warning: test tests/userprog/exec-bound-3 doesn't count for grading
 warning: test tests/userprog/exec-bound doesn't count for grading
-TOTAL TESTING SCORE: 53.0%
+warning: test tests/userprog/exec-bound-3 doesn't count for grading
+warning: test tests/userprog/sc-boundary-3 doesn't count for grading
+TOTAL TESTING SCORE: 56.8%
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -408,12 +348,12 @@ SUMMARY BY TEST SET
 
 Test Set                                      Pts Max  % Ttl  % Max
 --------------------------------------------- --- --- ------ ------
-tests/userprog/Rubric.functionality            81/108  26.2%/ 35.0%
-tests/userprog/Rubric.robustness               59/ 88  16.8%/ 25.0%
+tests/userprog/Rubric.functionality            84/108  27.2%/ 35.0%
+tests/userprog/Rubric.robustness               69/ 88  19.6%/ 25.0%
 tests/userprog/no-vm/Rubric                     1/  1  10.0%/ 10.0%
 tests/filesys/base/Rubric                       0/ 30   0.0%/ 30.0%
 --------------------------------------------- --- --- ------ ------
-Total                                                  53.0%/100.0%
+Total                                                  56.8%/100.0%
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -428,10 +368,10 @@ Functionality of system calls (tests/userprog/Rubric.functionality):
 	     3/ 3 tests/userprog/args-dbl-space
 
 	- Test "create" system call.
-	  ** 0/ 3 tests/userprog/create-empty
-	  ** 0/ 3 tests/userprog/create-long
+	     3/ 3 tests/userprog/create-empty
+	     3/ 3 tests/userprog/create-long
 	     3/ 3 tests/userprog/create-normal
-	  ** 0/ 3 tests/userprog/create-exists
+	     3/ 3 tests/userprog/create-exists
 
 	- Test "open" system call.
 	  ** 0/ 3 tests/userprog/open-missing
@@ -440,11 +380,11 @@ Functionality of system calls (tests/userprog/Rubric.functionality):
 
 	- Test "read" system call.
 	  ** 0/ 3 tests/userprog/read-normal
-	     3/ 3 tests/userprog/read-zero
+	  ** 0/ 3 tests/userprog/read-zero
 
 	- Test "write" system call.
 	  ** 0/ 3 tests/userprog/write-normal
-	     3/ 3 tests/userprog/write-zero
+	  ** 0/ 3 tests/userprog/write-zero
 
 	- Test "close" system call.
 	     3/ 3 tests/userprog/close-normal
@@ -473,8 +413,8 @@ Functionality of system calls (tests/userprog/Rubric.functionality):
 	  ** 0/ 3 tests/userprog/rox-multichild
 
 	- Section summary.
-	     19/ 28 tests passed
-	     81/108 points subtotal
+	     20/ 28 tests passed
+	     84/108 points subtotal
 
 Robustness of system calls (tests/userprog/Rubric.robustness):
 	- Test robustness of file descriptor handling.
@@ -489,7 +429,7 @@ Robustness of system calls (tests/userprog/Rubric.robustness):
 	  ** 0/ 2 tests/userprog/multi-child-fd
 
 	- Test robustness of pointer handling.
-	  ** 0/ 3 tests/userprog/create-bad-ptr
+	     3/ 3 tests/userprog/create-bad-ptr
 	     3/ 3 tests/userprog/exec-bad-ptr
 	  ** 0/ 3 tests/userprog/open-bad-ptr
 	     3/ 3 tests/userprog/read-bad-ptr
@@ -502,7 +442,7 @@ Robustness of system calls (tests/userprog/Rubric.robustness):
 	  ** 0/ 3 tests/userprog/write-boundary
 
 	- Test handling of null pointer and empty strings.
-	  ** 0/ 2 tests/userprog/create-null
+	     2/ 2 tests/userprog/create-null
 	     2/ 2 tests/userprog/open-null
 	  ** 0/ 2 tests/userprog/open-empty
 
@@ -515,7 +455,7 @@ Robustness of system calls (tests/userprog/Rubric.robustness):
 	- Test robustness of "exec" and "wait" system calls.
 	     5/ 5 tests/userprog/exec-missing
 	     5/ 5 tests/userprog/wait-bad-pid
-	  ** 0/ 5 tests/userprog/wait-killed
+	     5/ 5 tests/userprog/wait-killed
 
 	- Test robustness of exception handling.
 	  ** 0/ 1 tests/userprog/bad-read
@@ -526,8 +466,8 @@ Robustness of system calls (tests/userprog/Rubric.robustness):
 	  ** 0/ 1 tests/userprog/bad-jump2
 
 	- Section summary.
-	     20/ 34 tests passed
-	     59/ 88 points subtotal
+	     23/ 34 tests passed
+	     69/ 88 points subtotal
 
 Functionality of features that VM might break (tests/userprog/no-vm/Rubric):
 
@@ -564,170 +504,6 @@ Functionality of base file system (tests/filesys/base/Rubric):
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-DETAILS OF tests/userprog/create-empty FAILURE:
-
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-empty) begin
-  create-empty: exit(-1)
-Differences in `diff -u' format:
-  (create-empty) begin
-- create-empty: exit(-1)
-+ (create-empty) create(""): 1
-+ (create-empty) end
-+ create-empty: exit(0)
-Acceptable output:
-  (create-empty) begin
-  (create-empty) create(""): 0
-  (create-empty) end
-  create-empty: exit(0)
-Differences in `diff -u' format:
-  (create-empty) begin
-- (create-empty) create(""): 0
-+ (create-empty) create(""): 1
-  (create-empty) end
-  create-empty: exit(0)
-
-OUTPUT FROM tests/userprog/create-empty:
-
-Copying tests/userprog/create-empty to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/Oxrss_sjQh.dsk -m 4 -net none -nographic -monitor null
-PiLo hda1
-Loading............
-Kernel command line: -q -f extract run create-empty
-Pintos booting with 3,968 kB RAM...
-367 pages available in kernel pool.
-367 pages available in user pool.
-Calibrating timer...  297,779,200 loops/s.
-hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
-hda2: 4,096 sectors (2 MB), Pintos file system (21)
-hda3: 107 sectors (53 kB), Pintos scratch (22)
-filesys: using hda2
-scratch: using hda3
-Formatting file system...done.
-Boot complete.
-Extracting ustar archive from scratch device into file system...
-Putting 'create-empty' into the file system...
-Erasing ustar archive...
-Executing 'create-empty':
-(create-empty) begin
-(create-empty) create(""): 1
-(create-empty) end
-create-empty: exit(0)
-Execution of 'create-empty' complete.
-Timer: 66 ticks
-Thread: 30 idle ticks, 34 kernel ticks, 3 user ticks
-hda2 (filesys): 64 reads, 218 writes
-hda3 (scratch): 106 reads, 2 writes
-Console: 936 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-DETAILS OF tests/userprog/create-long FAILURE:
-
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-long) begin
-  (create-long) create("x..."): 0
-  (create-long) end
-  create-long: exit(0)
-Differences in `diff -u' format:
-  (create-long) begin
-- (create-long) create("x..."): 0
-+ (create-long) create("x..."): 1
-  (create-long) end
-  create-long: exit(0)
-
-OUTPUT FROM tests/userprog/create-long:
-
-Copying tests/userprog/create-long to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/A1T4pXzx4p.dsk -m 4 -net none -nographic -monitor null
-PiLo hda1
-Loading............
-Kernel command line: -q -f extract run create-long
-Pintos booting with 3,968 kB RAM...
-367 pages available in kernel pool.
-367 pages available in user pool.
-Calibrating timer...  247,398,400 loops/s.
-hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
-hda2: 4,096 sectors (2 MB), Pintos file system (21)
-hda3: 108 sectors (54 kB), Pintos scratch (22)
-filesys: using hda2
-scratch: using hda3
-Formatting file system...done.
-Boot complete.
-Extracting ustar archive from scratch device into file system...
-Putting 'create-long' into the file system...
-Erasing ustar archive...
-Executing 'create-long':
-(create-long) begin
-(create-long) create("x..."): 1
-(create-long) end
-create-long: exit(0)
-Execution of 'create-long' complete.
-Timer: 80 ticks
-Thread: 43 idle ticks, 36 kernel ticks, 2 user ticks
-hda2 (filesys): 65 reads, 220 writes
-hda3 (scratch): 107 reads, 2 writes
-Console: 932 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-DETAILS OF tests/userprog/create-exists FAILURE:
-
-run: try to re-create quux.dat: FAILED
-
-OUTPUT FROM tests/userprog/create-exists:
-
-Copying tests/userprog/create-exists to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/IPiD4kkNoO.dsk -m 4 -net none -nographic -monitor null
-PiLo hda1
-Loading............
-Kernel command line: -q -f extract run create-exists
-Pintos booting with 3,968 kB RAM...
-367 pages available in kernel pool.
-367 pages available in user pool.
-Calibrating timer...  209,510,400 loops/s.
-hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
-hda2: 4,096 sectors (2 MB), Pintos file system (21)
-hda3: 109 sectors (54 kB), Pintos scratch (22)
-filesys: using hda2
-scratch: using hda3
-Formatting file system...done.
-Boot complete.
-Extracting ustar archive from scratch device into file system...
-Putting 'create-exists' into the file system...
-Erasing ustar archive...
-Executing 'create-exists':
-(create-exists) begin
-(create-exists) create quux.dat
-(create-exists) create warble.dat
-(create-exists) try to re-create quux.dat
-(create-exists) try to re-create quux.dat: FAILED
-create-exists: exit(1)
-Execution of 'create-exists' complete.
-Timer: 77 ticks
-Thread: 42 idle ticks, 31 kernel ticks, 4 user ticks
-hda2 (filesys): 65 reads, 222 writes
-hda3 (scratch): 108 reads, 2 writes
-Console: 1052 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
 DETAILS OF tests/userprog/open-missing FAILURE:
 
 run: open() returned 134525369: FAILED
@@ -735,16 +511,16 @@ run: open() returned 134525369: FAILED
 OUTPUT FROM tests/userprog/open-missing:
 
 Copying tests/userprog/open-missing to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/QdjZnx0jnd.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/fyt_vPDZtv.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run open-missing
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  311,296,000 loops/s.
+Calibrating timer...  471,040,000 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 108 sectors (54 kB), Pintos scratch (22)
 filesys: using hda2
@@ -759,8 +535,8 @@ Executing 'open-missing':
 (open-missing) open() returned 134525369: FAILED
 open-missing: exit(1)
 Execution of 'open-missing' complete.
-Timer: 72 ticks
-Thread: 30 idle ticks, 38 kernel ticks, 4 user ticks
+Timer: 83 ticks
+Thread: 31 idle ticks, 49 kernel ticks, 3 user ticks
 hda2 (filesys): 64 reads, 220 writes
 hda3 (scratch): 107 reads, 2 writes
 Console: 937 characters output
@@ -772,22 +548,22 @@ Powering off...
 
 DETAILS OF tests/userprog/read-normal FAILURE:
 
-run: read of 239 bytes at offset 0 in "sample.txt" returned 0: FAILED
+run: read of 239 bytes at offset 0 in "sample.txt" returned 4294967295: FAILED
 
 OUTPUT FROM tests/userprog/read-normal:
 
 Copying tests/userprog/read-normal to scratch partition...
 Copying ../../tests/userprog/sample.txt to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/Rh_BdTo_Sz.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/MLR_mMx2jL.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run read-normal
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  367,001,600 loops/s.
+Calibrating timer...  472,678,400 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 110 sectors (55 kB), Pintos scratch (22)
 filesys: using hda2
@@ -801,15 +577,60 @@ Erasing ustar archive...
 Executing 'read-normal':
 (read-normal) begin
 (read-normal) open "sample.txt" for verification
-(read-normal) size of sample.txt (49) differs from expected (239)
-(read-normal) read of 239 bytes at offset 0 in "sample.txt" returned 0: FAILED
+(read-normal) size of sample.txt (4294967295) differs from expected (239)
+(read-normal) read of 239 bytes at offset 0 in "sample.txt" returned 4294967295: FAILED
 read-normal: exit(1)
 Execution of 'read-normal' complete.
-Timer: 79 ticks
-Thread: 43 idle ticks, 33 kernel ticks, 4 user ticks
+Timer: 89 ticks
+Thread: 44 idle ticks, 44 kernel ticks, 1 user ticks
 hda2 (filesys): 89 reads, 226 writes
 hda3 (scratch): 109 reads, 2 writes
-Console: 1121 characters output
+Console: 1138 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+DETAILS OF tests/userprog/read-zero FAILURE:
+
+run: read() returned -1 instead of 0: FAILED
+
+OUTPUT FROM tests/userprog/read-zero:
+
+Copying tests/userprog/read-zero to scratch partition...
+Copying ../../tests/userprog/sample.txt to scratch partition...
+qemu-system-i386 -device isa-debug-exit -hda /tmp/6C2lg602WI.dsk -m 4 -net none -nographic -monitor null
+PiLo hda1
+Loading............
+Kernel command line: -q -f extract run read-zero
+Pintos booting with 3,968 kB RAM...
+367 pages available in kernel pool.
+367 pages available in user pool.
+Calibrating timer...  484,966,400 loops/s.
+hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
+hda2: 4,096 sectors (2 MB), Pintos file system (21)
+hda3: 110 sectors (55 kB), Pintos scratch (22)
+filesys: using hda2
+scratch: using hda3
+Formatting file system...done.
+Boot complete.
+Extracting ustar archive from scratch device into file system...
+Putting 'read-zero' into the file system...
+Putting 'sample.txt' into the file system...
+Erasing ustar archive...
+Executing 'read-zero':
+(read-zero) begin
+(read-zero) open "sample.txt"
+(read-zero) read() returned -1 instead of 0: FAILED
+read-zero: exit(1)
+Execution of 'read-zero' complete.
+Timer: 74 ticks
+Thread: 30 idle ticks, 42 kernel ticks, 2 user ticks
+hda2 (filesys): 90 reads, 226 writes
+hda3 (scratch): 109 reads, 2 writes
+Console: 997 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -818,22 +639,22 @@ Powering off...
 
 DETAILS OF tests/userprog/write-normal FAILURE:
 
-run: write() returned 0 instead of 239: FAILED
+run: write() returned -1 instead of 239: FAILED
 
 OUTPUT FROM tests/userprog/write-normal:
 
 Copying tests/userprog/write-normal to scratch partition...
 Copying ../../tests/userprog/sample.txt to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/ewF8BZe5W_.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/crJHMdE4Bi.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run write-normal
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  325,222,400 loops/s.
+Calibrating timer...  504,627,200 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 111 sectors (55 kB), Pintos scratch (22)
 filesys: using hda2
@@ -848,14 +669,59 @@ Executing 'write-normal':
 (write-normal) begin
 (write-normal) create "test.txt"
 (write-normal) open "test.txt"
-(write-normal) write() returned 0 instead of 239: FAILED
+(write-normal) write() returned -1 instead of 239: FAILED
 write-normal: exit(1)
 Execution of 'write-normal' complete.
-Timer: 81 ticks
-Thread: 44 idle ticks, 35 kernel ticks, 3 user ticks
-hda2 (filesys): 90 reads, 228 writes
+Timer: 84 ticks
+Thread: 44 idle ticks, 38 kernel ticks, 3 user ticks
+hda2 (filesys): 111 reads, 233 writes
 hda3 (scratch): 110 reads, 2 writes
-Console: 1054 characters output
+Console: 1056 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+DETAILS OF tests/userprog/write-zero FAILURE:
+
+run: write() returned -1 instead of 0: FAILED
+
+OUTPUT FROM tests/userprog/write-zero:
+
+Copying tests/userprog/write-zero to scratch partition...
+Copying ../../tests/userprog/sample.txt to scratch partition...
+qemu-system-i386 -device isa-debug-exit -hda /tmp/GhCliUWme7.dsk -m 4 -net none -nographic -monitor null
+PiLo hda1
+Loading............
+Kernel command line: -q -f extract run write-zero
+Pintos booting with 3,968 kB RAM...
+367 pages available in kernel pool.
+367 pages available in user pool.
+Calibrating timer...  209,510,400 loops/s.
+hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
+hda2: 4,096 sectors (2 MB), Pintos file system (21)
+hda3: 110 sectors (55 kB), Pintos scratch (22)
+filesys: using hda2
+scratch: using hda3
+Formatting file system...done.
+Boot complete.
+Extracting ustar archive from scratch device into file system...
+Putting 'write-zero' into the file system...
+Putting 'sample.txt' into the file system...
+Erasing ustar archive...
+Executing 'write-zero':
+(write-zero) begin
+(write-zero) open "sample.txt"
+(write-zero) write() returned -1 instead of 0: FAILED
+write-zero: exit(1)
+Execution of 'write-zero' complete.
+Timer: 69 ticks
+Thread: 30 idle ticks, 37 kernel ticks, 2 user ticks
+hda2 (filesys): 90 reads, 226 writes
+hda3 (scratch): 109 reads, 2 writes
+Console: 1006 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -869,16 +735,16 @@ run: read "rox-simple": FAILED
 OUTPUT FROM tests/userprog/rox-simple:
 
 Copying tests/userprog/rox-simple to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/sJloC_yT0h.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/EN6rNxONOn.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run rox-simple
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  328,089,600 loops/s.
+Calibrating timer...  502,988,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 109 sectors (54 kB), Pintos scratch (22)
 filesys: using hda2
@@ -895,8 +761,8 @@ Executing 'rox-simple':
 (rox-simple) read "rox-simple": FAILED
 rox-simple: exit(1)
 Execution of 'rox-simple' complete.
-Timer: 81 ticks
-Thread: 45 idle ticks, 35 kernel ticks, 1 user ticks
+Timer: 83 ticks
+Thread: 43 idle ticks, 39 kernel ticks, 1 user ticks
 hda2 (filesys): 65 reads, 222 writes
 hda3 (scratch): 108 reads, 2 writes
 Console: 977 characters output
@@ -914,16 +780,16 @@ OUTPUT FROM tests/userprog/rox-child:
 
 Copying tests/userprog/rox-child to scratch partition...
 Copying tests/userprog/child-rox to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/YGrZCOJHSS.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/lVYfQuwDvs.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run rox-child
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  327,270,400 loops/s.
+Calibrating timer...  502,988,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 230 sectors (115 kB), Pintos scratch (22)
 filesys: using hda2
@@ -941,8 +807,8 @@ Executing 'rox-child':
 (rox-child) read "child-rox": FAILED
 rox-child: exit(1)
 Execution of 'rox-child' complete.
-Timer: 71 ticks
-Thread: 30 idle ticks, 38 kernel ticks, 3 user ticks
+Timer: 99 ticks
+Thread: 53 idle ticks, 44 kernel ticks, 2 user ticks
 hda2 (filesys): 90 reads, 466 writes
 hda3 (scratch): 229 reads, 2 writes
 Console: 1010 characters output
@@ -960,16 +826,16 @@ OUTPUT FROM tests/userprog/rox-multichild:
 
 Copying tests/userprog/rox-multichild to scratch partition...
 Copying tests/userprog/child-rox to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/TTZnqttq2C.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/uKsln92HH0.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run rox-multichild
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  345,702,400 loops/s.
+Calibrating timer...  444,825,600 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 230 sectors (115 kB), Pintos scratch (22)
 filesys: using hda2
@@ -988,7 +854,7 @@ Executing 'rox-multichild':
 rox-multichild: exit(1)
 Execution of 'rox-multichild' complete.
 Timer: 94 ticks
-Thread: 54 idle ticks, 37 kernel ticks, 4 user ticks
+Thread: 57 idle ticks, 35 kernel ticks, 2 user ticks
 hda2 (filesys): 90 reads, 466 writes
 hda3 (scratch): 229 reads, 2 writes
 Console: 1055 characters output
@@ -1000,23 +866,23 @@ Powering off...
 
 DETAILS OF tests/userprog/multi-child-fd FAILURE:
 
-run: read of 239 bytes at offset 0 in "sample.txt" returned 0: FAILED
+run: read of 239 bytes at offset 0 in "sample.txt" returned 4294967295: FAILED
 
 OUTPUT FROM tests/userprog/multi-child-fd:
 
 Copying tests/userprog/multi-child-fd to scratch partition...
 Copying ../../tests/userprog/sample.txt to scratch partition...
 Copying tests/userprog/child-close to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/3T7N4qsgra.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/6SiLiRqrBC.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run multi-child-fd
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  310,886,400 loops/s.
+Calibrating timer...  527,564,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 229 sectors (114 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1035,68 +901,15 @@ Executing 'multi-child-fd':
 (child-close) end
 child-close: exit(0)
 (multi-child-fd) wait(exec()) = 0
-(multi-child-fd) size of sample.txt (134525515) differs from expected (239)
-(multi-child-fd) read of 239 bytes at offset 0 in "sample.txt" returned 0: FAILED
+(multi-child-fd) size of sample.txt (4294967295) differs from expected (239)
+(multi-child-fd) read of 239 bytes at offset 0 in "sample.txt" returned 4294967295: FAILED
 multi-child-fd: exit(1)
 Execution of 'multi-child-fd' complete.
-Timer: 97 ticks
-Thread: 58 idle ticks, 35 kernel ticks, 5 user ticks
+Timer: 105 ticks
+Thread: 52 idle ticks, 48 kernel ticks, 5 user ticks
 hda2 (filesys): 162 reads, 466 writes
 hda3 (scratch): 228 reads, 2 writes
-Console: 1279 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-DETAILS OF tests/userprog/create-bad-ptr FAILURE:
-
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-bad-ptr) begin
-  create-bad-ptr: exit(-1)
-Differences in `diff -u' format:
-  (create-bad-ptr) begin
-- create-bad-ptr: exit(-1)
-+ (create-bad-ptr) create(0x20101234): 1
-+ (create-bad-ptr) end
-+ create-bad-ptr: exit(0)
-
-OUTPUT FROM tests/userprog/create-bad-ptr:
-
-Copying tests/userprog/create-bad-ptr to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/6FnCXcYZQd.dsk -m 4 -net none -nographic -monitor null
-PiLo hda1
-Loading............
-Kernel command line: -q -f extract run create-bad-ptr
-Pintos booting with 3,968 kB RAM...
-367 pages available in kernel pool.
-367 pages available in user pool.
-Calibrating timer...  329,728,000 loops/s.
-hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
-hda2: 4,096 sectors (2 MB), Pintos file system (21)
-hda3: 107 sectors (53 kB), Pintos scratch (22)
-filesys: using hda2
-scratch: using hda3
-Formatting file system...done.
-Boot complete.
-Extracting ustar archive from scratch device into file system...
-Putting 'create-bad-ptr' into the file system...
-Erasing ustar archive...
-Executing 'create-bad-ptr':
-(create-bad-ptr) begin
-(create-bad-ptr) create(0x20101234): 1
-(create-bad-ptr) end
-create-bad-ptr: exit(0)
-Execution of 'create-bad-ptr' complete.
-Timer: 76 ticks
-Thread: 38 idle ticks, 37 kernel ticks, 2 user ticks
-hda2 (filesys): 64 reads, 218 writes
-hda3 (scratch): 106 reads, 2 writes
-Console: 960 characters output
+Console: 1290 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -1110,16 +923,16 @@ run: should have called exit(-1): FAILED
 OUTPUT FROM tests/userprog/open-bad-ptr:
 
 Copying tests/userprog/open-bad-ptr to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/2i6pU0aQ7b.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/DpCfQj2eG1.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run open-bad-ptr
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  267,878,400 loops/s.
+Calibrating timer...  464,486,400 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 108 sectors (54 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1135,8 +948,8 @@ Executing 'open-bad-ptr':
 (open-bad-ptr) should have called exit(-1): FAILED
 open-bad-ptr: exit(1)
 Execution of 'open-bad-ptr' complete.
-Timer: 69 ticks
-Thread: 30 idle ticks, 37 kernel ticks, 2 user ticks
+Timer: 82 ticks
+Thread: 44 idle ticks, 36 kernel ticks, 2 user ticks
 hda2 (filesys): 64 reads, 220 writes
 hda3 (scratch): 107 reads, 2 writes
 Console: 976 characters output
@@ -1148,22 +961,22 @@ Powering off...
 
 DETAILS OF tests/userprog/read-boundary FAILURE:
 
-run: read() returned 0 instead of 239: FAILED
+run: read() returned -1 instead of 239: FAILED
 
 OUTPUT FROM tests/userprog/read-boundary:
 
 Copying tests/userprog/read-boundary to scratch partition...
 Copying ../../tests/userprog/sample.txt to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/qzwIhlk_EX.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/fCsQaQvSTK.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run read-boundary
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  314,572,800 loops/s.
+Calibrating timer...  498,892,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 115 sectors (57 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1177,14 +990,14 @@ Erasing ustar archive...
 Executing 'read-boundary':
 (read-boundary) begin
 (read-boundary) open "sample.txt"
-(read-boundary) read() returned 0 instead of 239: FAILED
+(read-boundary) read() returned -1 instead of 239: FAILED
 read-boundary: exit(1)
 Execution of 'read-boundary' complete.
-Timer: 80 ticks
-Thread: 40 idle ticks, 37 kernel ticks, 3 user ticks
+Timer: 79 ticks
+Thread: 31 idle ticks, 46 kernel ticks, 2 user ticks
 hda2 (filesys): 91 reads, 236 writes
 hda3 (scratch): 114 reads, 2 writes
-Console: 1030 characters output
+Console: 1031 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -1193,22 +1006,22 @@ Powering off...
 
 DETAILS OF tests/userprog/write-boundary FAILURE:
 
-run: write() returned 0 instead of 239: FAILED
+run: write() returned -1 instead of 239: FAILED
 
 OUTPUT FROM tests/userprog/write-boundary:
 
 Copying tests/userprog/write-boundary to scratch partition...
 Copying ../../tests/userprog/sample.txt to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/NlvZyt4O_C.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/rrW4wK50FY.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run write-boundary
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  320,716,800 loops/s.
+Calibrating timer...  484,966,400 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 114 sectors (57 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1222,67 +1035,14 @@ Erasing ustar archive...
 Executing 'write-boundary':
 (write-boundary) begin
 (write-boundary) open "sample.txt"
-(write-boundary) write() returned 0 instead of 239: FAILED
+(write-boundary) write() returned -1 instead of 239: FAILED
 write-boundary: exit(1)
 Execution of 'write-boundary' complete.
-Timer: 79 ticks
-Thread: 43 idle ticks, 33 kernel ticks, 3 user ticks
+Timer: 74 ticks
+Thread: 30 idle ticks, 41 kernel ticks, 3 user ticks
 hda2 (filesys): 91 reads, 234 writes
 hda3 (scratch): 113 reads, 2 writes
-Console: 1039 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-DETAILS OF tests/userprog/create-null FAILURE:
-
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (create-null) begin
-  create-null: exit(-1)
-Differences in `diff -u' format:
-  (create-null) begin
-- create-null: exit(-1)
-+ (create-null) create(NULL): 0
-+ (create-null) end
-+ create-null: exit(0)
-
-OUTPUT FROM tests/userprog/create-null:
-
-Copying tests/userprog/create-null to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/z1jXE64Sp8.dsk -m 4 -net none -nographic -monitor null
-PiLo hda1
-Loading............
-Kernel command line: -q -f extract run create-null
-Pintos booting with 3,968 kB RAM...
-367 pages available in kernel pool.
-367 pages available in user pool.
-Calibrating timer...  319,897,600 loops/s.
-hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
-hda2: 4,096 sectors (2 MB), Pintos file system (21)
-hda3: 107 sectors (53 kB), Pintos scratch (22)
-filesys: using hda2
-scratch: using hda3
-Formatting file system...done.
-Boot complete.
-Extracting ustar archive from scratch device into file system...
-Putting 'create-null' into the file system...
-Erasing ustar archive...
-Executing 'create-null':
-(create-null) begin
-(create-null) create(NULL): 0
-(create-null) end
-create-null: exit(0)
-Execution of 'create-null' complete.
-Timer: 67 ticks
-Thread: 30 idle ticks, 36 kernel ticks, 2 user ticks
-hda2 (filesys): 64 reads, 218 writes
-hda3 (scratch): 106 reads, 2 writes
-Console: 930 characters output
+Console: 1040 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -1296,16 +1056,16 @@ run: open() returned 134525394 instead of -1: FAILED
 OUTPUT FROM tests/userprog/open-empty:
 
 Copying tests/userprog/open-empty to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/xzuQnlvy3q.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/cE4i9iak_I.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run open-empty
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  300,646,400 loops/s.
+Calibrating timer...  499,712,000 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 108 sectors (54 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1321,71 +1081,12 @@ Executing 'open-empty':
 open-empty: exit(1)
 Execution of 'open-empty' complete.
 Timer: 74 ticks
-Thread: 44 idle ticks, 28 kernel ticks, 2 user ticks
+Thread: 30 idle ticks, 43 kernel ticks, 1 user ticks
 hda2 (filesys): 64 reads, 220 writes
 hda3 (scratch): 107 reads, 2 writes
 Console: 937 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
-Powering off...
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-DETAILS OF tests/userprog/wait-killed FAILURE:
-
-Kernel panic in run: PANIC at ../../userprog/exception.c:100 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0xc0029dd6
-Translation of call stack:
-0xc0029dd6: debug_panic (.../../lib/kernel/debug.c:38)
-
-OUTPUT FROM tests/userprog/wait-killed:
-
-Copying tests/userprog/wait-killed to scratch partition...
-Copying tests/userprog/child-bad to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/UheKJrhGv6.dsk -m 4 -net none -nographic -monitor null
-PiLo hda1
-Loading............
-Kernel command line: -q -f extract run wait-killed
-Pintos booting with 3,968 kB RAM...
-367 pages available in kernel pool.
-367 pages available in user pool.
-Calibrating timer...  340,787,200 loops/s.
-hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
-hda2: 4,096 sectors (2 MB), Pintos file system (21)
-hda3: 213 sectors (106 kB), Pintos scratch (22)
-filesys: using hda2
-scratch: using hda3
-Formatting file system...done.
-Boot complete.
-Extracting ustar archive from scratch device into file system...
-Putting 'wait-killed' into the file system...
-Putting 'child-bad' into the file system...
-Erasing ustar archive...
-Executing 'wait-killed':
-(wait-killed) begin
-(child-bad) begin
-Page fault at 0x20101234: not present error reading page in kernel context.
-Interrupt 0x0e (#PF Page-Fault Exception) at eip=0xc002df10
- cr2=20101234 error=00000000
- eax=20101234 ebx=c0037df0 ecx=000000ad edx=20101233
- esi=20101234 edi=c0113fb0 esp=20101234 ebp=c0113fe8
- cs=0008 ds=0010 es=0010 ss=0012
-Kernel PANIC at ../../userprog/exception.c:100 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0xc0029dd6 0Page fault at 0x6c6c696b: not present error reading page in kernel context.
-Interrupt 0x0e (#PF Page-Fault Exception) at eip=0xc0027590
- cr2=6c6c696b error=00000000
- eax=00000002 ebx=c0037df0 ecx=00000798 edx=000003d4
- esi=6c6c696b edi=c0032dbc esp=c0032dbc ebp=c0113de8
- cs=0008 ds=0010 es=0010 ss=0000
-Kernel PANIC recursion at ../../userprog/exception.c:100 in kill().
-Timer: 101 ticks
-Thread: 48 idle ticks, 40 kernel ticks, 13 user ticks
-hda2 (filesys): 128 reads, 432 writes
-hda3 (scratch): 212 reads, 2 writes
-Console: 1692 characters output
-Keyboard: 0 keys pressed
-Exception: 2 page faults
 Powering off...
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -1406,16 +1107,16 @@ Differences in `diff -u' format:
 OUTPUT FROM tests/userprog/bad-read:
 
 Copying tests/userprog/bad-read to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/tQBbf6u_mK.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/YulYhbruCY.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run bad-read
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  287,948,800 loops/s.
+Calibrating timer...  506,265,600 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 107 sectors (53 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1435,8 +1136,8 @@ Interrupt 0x0e (#PF Page-Fault Exception) at eip=0x80480af
  esi=00000000 edi=00000000 esp=bfffff80 ebp=bfffffbb
  cs=001b ds=0023 es=0023 ss=0023
 Execution of 'bad-read' complete.
-Timer: 76 ticks
-Thread: 44 idle ticks, 27 kernel ticks, 5 user ticks
+Timer: 74 ticks
+Thread: 30 idle ticks, 41 kernel ticks, 3 user ticks
 hda2 (filesys): 65 reads, 218 writes
 hda3 (scratch): 106 reads, 2 writes
 Console: 1204 characters output
@@ -1462,16 +1163,16 @@ Differences in `diff -u' format:
 OUTPUT FROM tests/userprog/bad-write:
 
 Copying tests/userprog/bad-write to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/yirzsmilBB.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/FB7Js1xaFq.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run bad-write
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  345,702,400 loops/s.
+Calibrating timer...  469,401,600 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 107 sectors (53 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1491,8 +1192,8 @@ Interrupt 0x0e (#PF Page-Fault Exception) at eip=0x80480af
  esi=00000000 edi=00000000 esp=bfffff80 ebp=bfffffba
  cs=001b ds=0023 es=0023 ss=0023
 Execution of 'bad-write' complete.
-Timer: 71 ticks
-Thread: 30 idle ticks, 38 kernel ticks, 3 user ticks
+Timer: 78 ticks
+Thread: 30 idle ticks, 43 kernel ticks, 5 user ticks
 hda2 (filesys): 64 reads, 218 writes
 hda3 (scratch): 106 reads, 2 writes
 Console: 1210 characters output
@@ -1518,16 +1219,16 @@ Differences in `diff -u' format:
 OUTPUT FROM tests/userprog/bad-jump:
 
 Copying tests/userprog/bad-jump to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/qiM3jdYQJa.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/ZMkvV_Bv6k.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run bad-jump
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  326,860,800 loops/s.
+Calibrating timer...  444,825,600 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 108 sectors (54 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1547,8 +1248,8 @@ Interrupt 0x0e (#PF Page-Fault Exception) at eip=0
  esi=00000000 edi=00000000 esp=bfffff6c ebp=bfffffbb
  cs=001b ds=0023 es=0023 ss=0023
 Execution of 'bad-jump' complete.
-Timer: 80 ticks
-Thread: 42 idle ticks, 32 kernel ticks, 6 user ticks
+Timer: 85 ticks
+Thread: 43 idle ticks, 39 kernel ticks, 3 user ticks
 hda2 (filesys): 65 reads, 220 writes
 hda3 (scratch): 107 reads, 2 writes
 Console: 1196 characters output
@@ -1574,16 +1275,16 @@ Differences in `diff -u' format:
 OUTPUT FROM tests/userprog/bad-read2:
 
 Copying tests/userprog/bad-read2 to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/CODzt__APU.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/QyEwOw6Fjy.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run bad-read2
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  338,329,600 loops/s.
+Calibrating timer...  498,073,600 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 107 sectors (53 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1603,8 +1304,8 @@ Interrupt 0x0e (#PF Page-Fault Exception) at eip=0x80480af
  esi=00000000 edi=00000000 esp=bfffff80 ebp=bfffffba
  cs=001b ds=0023 es=0023 ss=0023
 Execution of 'bad-read2' complete.
-Timer: 75 ticks
-Thread: 42 idle ticks, 30 kernel ticks, 3 user ticks
+Timer: 93 ticks
+Thread: 47 idle ticks, 43 kernel ticks, 3 user ticks
 hda2 (filesys): 65 reads, 218 writes
 hda3 (scratch): 106 reads, 2 writes
 Console: 1224 characters output
@@ -1630,16 +1331,16 @@ Differences in `diff -u' format:
 OUTPUT FROM tests/userprog/bad-write2:
 
 Copying tests/userprog/bad-write2 to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/Y82NjX6dLN.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/fU0QqIS5VF.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run bad-write2
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  321,945,600 loops/s.
+Calibrating timer...  482,508,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 107 sectors (53 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1660,7 +1361,7 @@ Interrupt 0x0e (#PF Page-Fault Exception) at eip=0x80480af
  cs=001b ds=0023 es=0023 ss=0023
 Execution of 'bad-write2' complete.
 Timer: 80 ticks
-Thread: 38 idle ticks, 38 kernel ticks, 4 user ticks
+Thread: 30 idle ticks, 46 kernel ticks, 4 user ticks
 hda2 (filesys): 64 reads, 218 writes
 hda3 (scratch): 106 reads, 2 writes
 Console: 1230 characters output
@@ -1686,16 +1387,16 @@ Differences in `diff -u' format:
 OUTPUT FROM tests/userprog/bad-jump2:
 
 Copying tests/userprog/bad-jump2 to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/2wNRCgD7Cz.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/8F7IlsWd1E.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run bad-jump2
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  335,052,800 loops/s.
+Calibrating timer...  501,350,400 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 108 sectors (54 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1715,8 +1416,8 @@ Interrupt 0x0e (#PF Page-Fault Exception) at eip=0xc0000000
  esi=00000000 edi=00000000 esp=bfffff7c ebp=bfffffba
  cs=001b ds=0023 es=0023 ss=0023
 Execution of 'bad-jump2' complete.
-Timer: 70 ticks
-Thread: 30 idle ticks, 36 kernel ticks, 5 user ticks
+Timer: 88 ticks
+Thread: 43 idle ticks, 42 kernel ticks, 4 user ticks
 hda2 (filesys): 65 reads, 220 writes
 hda3 (scratch): 107 reads, 2 writes
 Console: 1225 characters output
@@ -1728,21 +1429,21 @@ Powering off...
 
 DETAILS OF tests/filesys/base/sm-create FAILURE:
 
-run: read of 512 bytes at offset 0 in "blargle" returned 0: FAILED
+run: read of 512 bytes at offset 0 in "blargle" returned 4294967295: FAILED
 
 OUTPUT FROM tests/filesys/base/sm-create:
 
 Copying tests/filesys/base/sm-create to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/gvuRqTs5Y8.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/UI1Fjfpk_c.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run sm-create
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  385,433,600 loops/s.
+Calibrating timer...  471,040,000 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1756,15 +1457,15 @@ Executing 'sm-create':
 (sm-create) begin
 (sm-create) create "blargle"
 (sm-create) open "blargle" for verification
-(sm-create) size of blargle (44) differs from expected (5678)
-(sm-create) read of 512 bytes at offset 0 in "blargle" returned 0: FAILED
+(sm-create) size of blargle (4294967295) differs from expected (5678)
+(sm-create) read of 512 bytes at offset 0 in "blargle" returned 4294967295: FAILED
 sm-create: exit(1)
 Execution of 'sm-create' complete.
-Timer: 73 ticks
-Thread: 40 idle ticks, 29 kernel ticks, 4 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 83 ticks
+Thread: 45 idle ticks, 36 kernel ticks, 2 user ticks
+hda2 (filesys): 86 reads, 244 writes
 hda3 (scratch): 111 reads, 2 writes
-Console: 1079 characters output
+Console: 1096 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -1778,16 +1479,16 @@ run: write 5678 bytes at offset 0 in "quux" failed: FAILED
 OUTPUT FROM tests/filesys/base/sm-full:
 
 Copying tests/filesys/base/sm-full to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/3HGYwilWA4.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/ASTfJvFHHc.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run sm-full
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  281,804,800 loops/s.
+Calibrating timer...  467,763,200 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1805,9 +1506,9 @@ Executing 'sm-full':
 (sm-full) write 5678 bytes at offset 0 in "quux" failed: FAILED
 sm-full: exit(1)
 Execution of 'sm-full' complete.
-Timer: 74 ticks
-Thread: 31 idle ticks, 41 kernel ticks, 3 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 77 ticks
+Thread: 35 idle ticks, 40 kernel ticks, 2 user ticks
+hda2 (filesys): 86 reads, 244 writes
 hda3 (scratch): 111 reads, 2 writes
 Console: 993 characters output
 Keyboard: 0 keys pressed
@@ -1823,16 +1524,16 @@ run: write 13 bytes at offset 858 failed: FAILED
 OUTPUT FROM tests/filesys/base/sm-random:
 
 Copying tests/filesys/base/sm-random to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/_vzWUTgMm3.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/GERhrOMoHm.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run sm-random
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  308,019,200 loops/s.
+Calibrating timer...  463,667,200 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 116 sectors (58 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1850,9 +1551,9 @@ Executing 'sm-random':
 (sm-random) write 13 bytes at offset 858 failed: FAILED
 sm-random: exit(1)
 Execution of 'sm-random' complete.
-Timer: 79 ticks
-Thread: 46 idle ticks, 30 kernel ticks, 3 user ticks
-hda2 (filesys): 69 reads, 236 writes
+Timer: 83 ticks
+Thread: 44 idle ticks, 37 kernel ticks, 2 user ticks
+hda2 (filesys): 89 reads, 244 writes
 hda3 (scratch): 115 reads, 2 writes
 Console: 1023 characters output
 Keyboard: 0 keys pressed
@@ -1868,16 +1569,16 @@ run: write 513 bytes at offset 0 in "noodle" failed: FAILED
 OUTPUT FROM tests/filesys/base/sm-seq-block:
 
 Copying tests/filesys/base/sm-seq-block to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/HI44YXy5QW.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/etfvy_noiF.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run sm-seq-block
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  480,870,400 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1895,9 +1596,9 @@ Executing 'sm-seq-block':
 (sm-seq-block) write 513 bytes at offset 0 in "noodle" failed: FAILED
 sm-seq-block: exit(1)
 Execution of 'sm-seq-block' complete.
-Timer: 64 ticks
-Thread: 30 idle ticks, 31 kernel ticks, 4 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 86 ticks
+Thread: 41 idle ticks, 40 kernel ticks, 5 user ticks
+hda2 (filesys): 86 reads, 244 writes
 hda3 (scratch): 111 reads, 2 writes
 Console: 1050 characters output
 Keyboard: 0 keys pressed
@@ -1913,16 +1614,16 @@ run: write 667 bytes at offset 0 in "nibble" failed: FAILED
 OUTPUT FROM tests/filesys/base/sm-seq-random:
 
 Copying tests/filesys/base/sm-seq-random to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/_S7J0WqABR.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/JqPVmVY3fB.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run sm-seq-random
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  297,779,200 loops/s.
+Calibrating timer...  490,700,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1940,9 +1641,9 @@ Executing 'sm-seq-random':
 (sm-seq-random) write 667 bytes at offset 0 in "nibble" failed: FAILED
 sm-seq-random: exit(1)
 Execution of 'sm-seq-random' complete.
-Timer: 80 ticks
-Thread: 42 idle ticks, 34 kernel ticks, 5 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 78 ticks
+Thread: 43 idle ticks, 33 kernel ticks, 2 user ticks
+hda2 (filesys): 86 reads, 244 writes
 hda3 (scratch): 111 reads, 2 writes
 Console: 1060 characters output
 Keyboard: 0 keys pressed
@@ -1953,21 +1654,21 @@ Powering off...
 
 DETAILS OF tests/filesys/base/lg-create FAILURE:
 
-run: read of 512 bytes at offset 0 in "blargle" returned 0: FAILED
+run: read of 512 bytes at offset 0 in "blargle" returned 4294967295: FAILED
 
 OUTPUT FROM tests/filesys/base/lg-create:
 
 Copying tests/filesys/base/lg-create to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/zewYMpLWjX.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/gsho4ObSkT.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run lg-create
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  219,955,200 loops/s.
+Calibrating timer...  433,356,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -1981,15 +1682,15 @@ Executing 'lg-create':
 (lg-create) begin
 (lg-create) create "blargle"
 (lg-create) open "blargle" for verification
-(lg-create) size of blargle (44) differs from expected (75678)
-(lg-create) read of 512 bytes at offset 0 in "blargle" returned 0: FAILED
+(lg-create) size of blargle (4294967295) differs from expected (75678)
+(lg-create) read of 512 bytes at offset 0 in "blargle" returned 4294967295: FAILED
 lg-create: exit(1)
 Execution of 'lg-create' complete.
-Timer: 70 ticks
-Thread: 30 idle ticks, 36 kernel ticks, 4 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 92 ticks
+Thread: 46 idle ticks, 43 kernel ticks, 4 user ticks
+hda2 (filesys): 86 reads, 380 writes
 hda3 (scratch): 111 reads, 2 writes
-Console: 1080 characters output
+Console: 1097 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -2003,16 +1704,16 @@ run: write 75678 bytes at offset 0 in "quux" failed: FAILED
 OUTPUT FROM tests/filesys/base/lg-full:
 
 Copying tests/filesys/base/lg-full to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/ZAGTE8N7yW.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/tm0otyrnbJ.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run lg-full
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  365,772,800 loops/s.
+Calibrating timer...  450,560,000 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2030,9 +1731,9 @@ Executing 'lg-full':
 (lg-full) write 75678 bytes at offset 0 in "quux" failed: FAILED
 lg-full: exit(1)
 Execution of 'lg-full' complete.
-Timer: 72 ticks
-Thread: 40 idle ticks, 30 kernel ticks, 2 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 90 ticks
+Thread: 46 idle ticks, 40 kernel ticks, 4 user ticks
+hda2 (filesys): 86 reads, 380 writes
 hda3 (scratch): 111 reads, 2 writes
 Console: 994 characters output
 Keyboard: 0 keys pressed
@@ -2048,16 +1749,16 @@ run: write 512 bytes at offset 6144 failed: FAILED
 OUTPUT FROM tests/filesys/base/lg-random:
 
 Copying tests/filesys/base/lg-random to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/8VCUg9I5Xc.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/f5iywx_5Ny.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run lg-random
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  326,860,800 loops/s.
+Calibrating timer...  490,700,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 116 sectors (58 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2075,9 +1776,9 @@ Executing 'lg-random':
 (lg-random) write 512 bytes at offset 6144 failed: FAILED
 lg-random: exit(1)
 Execution of 'lg-random' complete.
-Timer: 72 ticks
-Thread: 33 idle ticks, 37 kernel ticks, 2 user ticks
-hda2 (filesys): 69 reads, 236 writes
+Timer: 80 ticks
+Thread: 30 idle ticks, 45 kernel ticks, 5 user ticks
+hda2 (filesys): 89 reads, 390 writes
 hda3 (scratch): 115 reads, 2 writes
 Console: 1025 characters output
 Keyboard: 0 keys pressed
@@ -2093,16 +1794,16 @@ run: write 513 bytes at offset 0 in "noodle" failed: FAILED
 OUTPUT FROM tests/filesys/base/lg-seq-block:
 
 Copying tests/filesys/base/lg-seq-block to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/09YN3mtY9l.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/gXsgv72cQu.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run lg-seq-block
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  339,558,400 loops/s.
+Calibrating timer...  496,435,200 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2120,9 +1821,9 @@ Executing 'lg-seq-block':
 (lg-seq-block) write 513 bytes at offset 0 in "noodle" failed: FAILED
 lg-seq-block: exit(1)
 Execution of 'lg-seq-block' complete.
-Timer: 76 ticks
-Thread: 41 idle ticks, 32 kernel ticks, 3 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 81 ticks
+Thread: 33 idle ticks, 43 kernel ticks, 5 user ticks
+hda2 (filesys): 86 reads, 380 writes
 hda3 (scratch): 111 reads, 2 writes
 Console: 1050 characters output
 Keyboard: 0 keys pressed
@@ -2138,16 +1839,16 @@ run: write 717 bytes at offset 0 in "nibble" failed: FAILED
 OUTPUT FROM tests/filesys/base/lg-seq-random:
 
 Copying tests/filesys/base/lg-seq-random to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/R76cvhpZx8.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/f2lyCbk91i.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run lg-seq-random
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  382,566,400 loops/s.
+Calibrating timer...  531,660,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 112 sectors (56 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2165,9 +1866,9 @@ Executing 'lg-seq-random':
 (lg-seq-random) write 717 bytes at offset 0 in "nibble" failed: FAILED
 lg-seq-random: exit(1)
 Execution of 'lg-seq-random' complete.
-Timer: 71 ticks
-Thread: 38 idle ticks, 32 kernel ticks, 2 user ticks
-hda2 (filesys): 66 reads, 228 writes
+Timer: 81 ticks
+Thread: 30 idle ticks, 47 kernel ticks, 5 user ticks
+hda2 (filesys): 86 reads, 380 writes
 hda3 (scratch): 111 reads, 2 writes
 Console: 1060 characters output
 Keyboard: 0 keys pressed
@@ -2184,16 +1885,16 @@ OUTPUT FROM tests/filesys/base/syn-read:
 
 Copying tests/filesys/base/syn-read to scratch partition...
 Copying tests/filesys/base/child-syn-read to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/84XzT8xQ1e.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/lXKIhQPjAn.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run syn-read
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  323,584,000 loops/s.
+Calibrating timer...  486,604,800 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 238 sectors (119 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2212,11 +1913,11 @@ Executing 'syn-read':
 (syn-read) write "data": FAILED
 syn-read: exit(1)
 Execution of 'syn-read' complete.
-Timer: 92 ticks
-Thread: 57 idle ticks, 33 kernel ticks, 3 user ticks
-hda2 (filesys): 92 reads, 482 writes
+Timer: 96 ticks
+Thread: 50 idle ticks, 45 kernel ticks, 2 user ticks
+hda2 (filesys): 113 reads, 488 writes
 hda3 (scratch): 237 reads, 2 writes
-Console: 1018 characters output
+Console: 1019 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -2231,16 +1932,16 @@ OUTPUT FROM tests/filesys/base/syn-write:
 
 Copying tests/filesys/base/syn-write to scratch partition...
 Copying tests/filesys/base/child-syn-wrt to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/_rRWjJibhN.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/nLgQkSWdAt.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run syn-write
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  339,148,800 loops/s.
+Calibrating timer...  473,497,600 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 237 sectors (118 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2255,44 +1956,44 @@ Executing 'syn-write':
 (syn-write) begin
 (syn-write) create "stuff"
 (syn-write) exec child 1 of 10: "child-syn-wrt 0"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 2 of 10: "child-syn-wrt 1"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 3 of 10: "child-syn-wrt 2"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 4 of 10: "child-syn-wrt 3"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 5 of 10: "child-syn-wrt 4"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 6 of 10: "child-syn-wrt 5"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 7 of 10: "child-syn-wrt 6"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 8 of 10: "child-syn-wrt 7"
-((null)) write "stuff": FAILED
-child-syn-wrt: exit(1)
 (syn-write) exec child 9 of 10: "child-syn-wrt 8"
+(syn-write) exec child 10 of 10: "child-syn-wrt 9"
 ((null)) write "stuff": FAILED
 child-syn-wrt: exit(1)
-(syn-write) exec child 10 of 10: "child-syn-wrt 9"
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
+((null)) write "stuff": FAILED
+child-syn-wrt: exit(1)
 ((null)) write "stuff": FAILED
 child-syn-wrt: exit(1)
 (syn-write) wait for child 1 of 10 returned 1 (expected 0)
 (syn-write) wait for child 1 of 10 returned 1 (expected 0): FAILED
 syn-write: exit(1)
 Execution of 'syn-write' complete.
-Timer: 133 ticks
-Thread: 72 idle ticks, 39 kernel ticks, 22 user ticks
-hda2 (filesys): 552 reads, 480 writes
+Timer: 99 ticks
+Thread: 31 idle ticks, 51 kernel ticks, 17 user ticks
+hda2 (filesys): 573 reads, 494 writes
 hda3 (scratch): 236 reads, 2 writes
-Console: 2116 characters output
+Console: 2115 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
@@ -2306,16 +2007,16 @@ run: write "deleteme": FAILED
 OUTPUT FROM tests/filesys/base/syn-remove:
 
 Copying tests/filesys/base/syn-remove to scratch partition...
-qemu-system-i386 -device isa-debug-exit -hda /tmp/acH3giiBs6.dsk -m 4 -net none -nographic -monitor null
+qemu-system-i386 -device isa-debug-exit -hda /tmp/OyY9KqEFWw.dsk -m 4 -net none -nographic -monitor null
 PiLo hda1
 Loading............
 Kernel command line: -q -f extract run syn-remove
 Pintos booting with 3,968 kB RAM...
 367 pages available in kernel pool.
 367 pages available in user pool.
-Calibrating timer...  340,787,200 loops/s.
+Calibrating timer...  472,678,400 loops/s.
 hda: 5,040 sectors (2 MB), model "QM00001", serial "QEMU HARDDISK"
-hda1: 196 sectors (98 kB), Pintos OS kernel (20)
+hda1: 197 sectors (98 kB), Pintos OS kernel (20)
 hda2: 4,096 sectors (2 MB), Pintos file system (21)
 hda3: 115 sectors (57 kB), Pintos scratch (22)
 filesys: using hda2
@@ -2334,9 +2035,9 @@ Executing 'syn-remove':
 (syn-remove) write "deleteme": FAILED
 syn-remove: exit(1)
 Execution of 'syn-remove' complete.
-Timer: 85 ticks
-Thread: 41 idle ticks, 39 kernel ticks, 5 user ticks
-hda2 (filesys): 67 reads, 234 writes
+Timer: 88 ticks
+Thread: 46 idle ticks, 41 kernel ticks, 1 user ticks
+hda2 (filesys): 87 reads, 241 writes
 hda3 (scratch): 114 reads, 2 writes
 Console: 1035 characters output
 Keyboard: 0 keys pressed

@@ -63,7 +63,11 @@ static void syscall_handler(struct intr_frame *f) {
   /*Result currently used in sys_exec & sys_wait*/
   int result;
 
-  check_address((void *)f->esp);
+  /*It is not enough to check that the stack pointer is a valid
+  virtual address pointer. One must check that the virtual
+  address pointer refers to a valid page for the process'
+  memory.*/
+  user_to_kernel_ptr((const void *)f->esp);
 
   switch (*sys_call) {
 
