@@ -8,6 +8,7 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
+#include "threads/malloc.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
 #include <console.h>
@@ -40,6 +41,8 @@ int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
 void seek(int fd, unsigned position);
 bool remove (const char *file);
+int open (const char *file);
+void close (int fd);
 unsigned tell(int fd);
 struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
@@ -118,7 +121,7 @@ static void syscall_handler(struct intr_frame *f) {
     /* Opens the file called file. Returns a nonnegative integer handle called a
     "file descriptor" (fd), or -1 if the file could not be opened.*/
     get_arguments(f, &args[0], 1); //process args
-    args[0] = user_to_kernel_ptr((const void *)args[0]); //assign to pointer
+    args[0] = user_to_kernel_ptr((const void *) args[0]); //assign to pointer
     f->eax = open((const char *)args[0]);
     break;
 
