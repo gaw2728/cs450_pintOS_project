@@ -39,6 +39,7 @@ int filesize (int fd);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
 void seek(int fd, unsigned position);
+bool remove (const char *file);
 unsigned tell(int fd);
 struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
@@ -107,7 +108,10 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_REMOVE:
-    /* Deletes the file called file. Returns true if successful, false otherwise.*/
+    get_arguments(f, &args[0], 1);
+    //check_valid_string((const void *) args[0]);
+    args[0] = user_to_kernel_ptr((const void *) args[0]);
+    f->eax = remove((const char *) args[0]);
     break;
 
   case SYS_OPEN:
@@ -260,6 +264,14 @@ int open (const char *file) {
   lock_release(&filesys);
   return fd;
 
+}
+
+bool remove (const char *file)
+{
+  lock_acquire(&filesys);
+  bool success = filesys_remove(file);
+  lock_release(&filesys);
+  return success;
 }
 
 /**
