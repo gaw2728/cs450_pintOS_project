@@ -105,11 +105,15 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_REMOVE:
-    /*TODO SYSCALL REMOVE HANDLER*/
+    /* Deletes the file called file. Returns true if successful, false otherwise.*/
     break;
 
   case SYS_OPEN:
-    /*TODO SYSCALL OPEN HANDLER*/
+    /* Opens the file called file. Returns a nonnegative integer handle called a
+    "file descriptor" (fd), or -1 if the file could not be opened.*/
+    get_arguments(f, &args[0], 1); //process args
+    args[0] = user_to_kernel_ptr((const void *)args[0]); //assign to pointer
+    f->eax = open((const char *)args[0]);
     break;
 
   case SYS_FILESIZE:
@@ -190,7 +194,7 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_CLOSE:
-    /*TODO SYSCALL CLOSE HANDLER*/
+    /*Closes file descriptor fd.*/
     break;
 
   default:
@@ -240,6 +244,19 @@ bool create(const char *file, unsigned initial_size) {
   lock_release(&filesys);
 
   return success;
+}
+
+int open (const char *file) {
+  lock_acquire(&filesys); //get the lock
+  struct file *current_file = filesys_open(file); //populate struct
+  if (!current_file) {
+    lock_release(&filesys);
+    return -1; //TODO replace this?
+  }
+  int fd = add_file_to_process(current_file);
+  lock_release(&filesys);
+  return fd;
+
 }
 
 /**
@@ -376,7 +393,7 @@ unsigned tell(int fd) {
  * Retrieve the file associated with the given fd.
  */
 struct file *get_file(int fd) {
-  struct thread *t_cur = thread_current();
+  struct thread *t_cur = thread_current();process_file
   struct list_elem *e;
 
   // navigate through the list of open file descriptors
@@ -390,6 +407,17 @@ struct file *get_file(int fd) {
   }
 
   return NULL;
+}
+
+/* populates the file struct and returns the file descriptor */
+int add_file_to_process (struct file *f)
+{
+  struct process_file *pf = malloc(sizeof(struct process_file));
+  pf->file = f;
+  pf->fd = thread_current()->fd;
+  thread_current()->fd++;
+  list_push_back(&thread_current()->file_list, &pf->elem);
+  return pf->fd;
 }
 
 /* Determine if the given address is valid in user memory */
