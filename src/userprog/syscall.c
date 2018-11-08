@@ -42,6 +42,8 @@ void seek(int fd, unsigned position);
 unsigned tell(int fd);
 struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
+int add_file_to_process (struct file *f);
+void close_file_from_process (int fd);
 /******************** END PA3 ADDED CODE ********************/
 
 void syscall_init(void) {
@@ -194,7 +196,8 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_CLOSE:
-    /*Closes file descriptor fd.*/
+    get_arguments(f, &args[0], 1);
+    close(args[0]);
     break;
 
   default:
@@ -387,13 +390,20 @@ unsigned tell(int fd) {
   return position;
 }
 
+void close (int fd)
+{
+  lock_acquire(&filesys);
+  close_file_from_process(fd);
+  lock_release(&filesys);
+}
+
 /*<==================== HELPER FUNCTIONS ====================> */
 
 /**
  * Retrieve the file associated with the given fd.
  */
 struct file *get_file(int fd) {
-  struct thread *t_cur = thread_current();process_file
+  struct thread *t_cur = thread_current();
   struct list_elem *e;
 
   // navigate through the list of open file descriptors
@@ -412,7 +422,7 @@ struct file *get_file(int fd) {
 /* populates the file struct and returns the file descriptor */
 int add_file_to_process (struct file *f)
 {
-  struct process_file *pf = malloc(sizeof(struct process_file));
+  struct open_file *pf = malloc(sizeof(struct open_file));
   pf->file = f;
   pf->fd = thread_current()->fd;
   thread_current()->fd++;
@@ -469,6 +479,27 @@ void get_arguments(struct intr_frame *f, int *args, int num_args) {
     arg_ptr = (int *)f->esp + i + 1;
     check_address((const void *)arg_ptr);
     args[i] = *arg_ptr;
+  }
+}
+
+
+void close_file_from_process (int fd)
+{
+  struct thread *t = thread_current();
+  struct list_elem *next, *e = list_begin(&t->file_list);
+
+  while (e != list_end (&t->file_list)) {
+      next = list_next(e);
+      struct open_file *pf = list_entry (e, struct open_file, elem);
+      if (fd == pf->fd || fd == -1) {
+        file_close(pf->file);
+        list_remove(&pf->elem);
+        free(pf);
+        if (fd != -1) {
+          return;
+        }
+      }
+      e = next;
   }
 }
 
