@@ -168,7 +168,7 @@ static void syscall_handler(struct intr_frame *f) {
     size = args[2];
     // check that each byte of the buffer is valid in memory
     for (int i = 0; i < size; i++) {
-      check_address((const void *)buffer);
+      user_to_kernel_ptr((const void *)buffer);
       buffer++;
     }
 
