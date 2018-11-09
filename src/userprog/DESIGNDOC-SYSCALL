@@ -75,26 +75,61 @@ threads.h
 		->struct list child_list: a list of child processes for a process
 		maintained by a kernel thread.
 
+	struct list file_list: list of process' open files.
+
+	int fd: number of total file descriptors on the system.
+
 syscall.c
+	struct semaphore write_allowed: For writers end of readers/writers
+
+	struct lock mutex: used for locking in reader/writers problem
+
+	global int reader_underscore count: keeps track of number or readers.
+
+syscall.h
 	struct lock filesys: A lock to control access to the file system.
+
+	#define CLOSE_ALL_FILES -1: macro that can be used to close all
+	files in a process' file_list.
 
 
 >> A2: Describe how file descriptors are associated with open files.
 >> Are file descriptors unique within the entire OS or just within a
 >> single process?
 
-/******************************************************************/
-TODO BY FILE CREATING AND MODIFYING SYSCALLS
-/******************************************************************/
+File descriptors are associated with files through the use of the
+open_file struct in syscall.h. This ties a file descriptor to a
+file struct file element for the file_list declaired in threads.h
+
+To this point, our implementation has all threads managing a list of
+files they have open. This makes file discriptors unique to the
+process.
+
+There is also a variable int fd in thread.h that keeps track of all
+open files on the system.
 
 ---- ALGORITHMS ----
 
 >> A3: Describe your code for reading and writing user data from the
 >> kernel.
 
-/******************************************************************/
-TODO DISCUSS WITH GROUP
-/******************************************************************/
+First and formost when the systemcall handler is called we check the
+passed pointer to be a valid virtual address and that is actually
+points to a page of the user process using pintos built-n
+pagedir_get_page which returns a page pointer only if the virtual
+address ties to a page of the process' page directory.
+
+We have a helper function in syscall.c named get_arguments that will
+then read the arguments off the user stack. It reads the appropriate
+number of arguments off the stack placing them in and args[] of proper
+size. This decision was made to simplify access to the arguments
+themselves and also continues to do address checks.
+
+When dealing with buffers concerning users each buffer byte address
+is checked in much the same way for validity.
+
+As per the intel 32bit architecture all return values of the system
+call are passed to the interrupt frame eax register.
 
 >> A4: Briefly describe your implementation of the "wait" system call
 >> and how it interacts with process termination.
@@ -227,13 +262,29 @@ that of a kill signal which might disrupt our implementation.
 >> A8: Why did you choose to implement access to user memory from the
 >> kernel in the way that you did?
 
-/******************************************************************/
-TODO DISCUSS WITH GROUP
-/******************************************************************/
+As described in [A3] the reason we chose to implement access to
+user memory in the was we did was partly programmer ease of use.
+However, by doing it this way we also have a uniform way of pointer
+checking for memory violations. In simple terms we have a memory-
+checking bomb dog that will not allow improper pointers.
+
+Invalud user assignments are handled in exception.c.
 
 >> A9: What advantages or disadvantages can you see to your design
 >> for file descriptors?
 
-/******************************************************************/
-TODO BY FILE CREATING AND MODIFYING SYSCALLS
-/******************************************************************/-
+The advantage to our design is that responsibility for cleanup is
+passed onto processes. This decreases the complexity of kernel
+management and passed the responsibility to processes. Like a
+parent expecting kids to cleanup after they're done playing.
+
+On the other hand if the responsibility were given to the OS
+to manage it would increase the complexity of kernel management
+but decrease everything to a single point of failure. The
+kernel would manage what files had access to an open file
+and would be responsible for closing out file descriptors that
+are no longer in use by any process and manage process groups
+with open file descriptors.
+
+We feel we went with the simpler to implement for programmers
+solution, giving responsibility to processes to clean up.
