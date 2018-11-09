@@ -272,15 +272,22 @@ process_exit (void)
   /*=========================== PA3 MODIFIED CODE ============================*/
   /*FILE DISCRIPTOR FREEING CAUSING TESTS TO FAIL.*/
   /*Handle closing of all file resources*/
-  struct list_elem *e;
-  struct open_file *cur_file;
+  //struct list_elem *e;
+  //struct open_file *cur_file;
+  
 
-  // navigate through the list of open file descriptors
-  for (e = list_begin(&cur->file_list); e != list_end(&cur->file_list);
-       e = list_next(e)) {
-    cur_file = list_entry(e, struct open_file, file_elem);
-    close(cur_file->fd);
-  }
+  // // navigate through the list of open file descriptors
+  // for (e = list_begin(&cur->file_list); e != list_end(&cur->file_list);
+  //      e = list_next(e)) {
+  //   cur_file = list_entry(e, struct open_file, file_elem);
+  //   close(cur_file->fd);
+  // }
+
+   lock_acquire(&filesys);
+   
+   close_file_from_process (CLOSE_ALL_FILES);
+
+   lock_release(&filesys);
 
   /*If this process had children all of the child resources need to be
   cleaned up*/

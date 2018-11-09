@@ -18,7 +18,7 @@
 
 /********************** PA3 ADDED CODE **********************/
 /*This lock is for protecting file system access*/
-struct lock filesys;
+//struct lock filesys;
 
 /********************** PA3 ADDED CODE **********************/
 
@@ -40,7 +40,6 @@ unsigned tell(int fd);
 struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
 int add_file_to_process (struct file *f);
-void close_file_from_process (int fd);
 /******************** END PA3 ADDED CODE ********************/
 
 void syscall_init(void) {
@@ -502,11 +501,11 @@ void close_file_from_process (int fd)
   while (e != list_end (&t->file_list)) {
       next = list_next(e);
       struct open_file *pf = list_entry (e, struct open_file, file_elem);
-      if (fd == pf->fd || fd == -1) {
+      if (fd == pf->fd || fd == CLOSE_ALL_FILES) {
         file_close(pf->file);
         list_remove(&pf->file_elem);
         free(pf);
-        if (fd != -1) {
+        if (fd != CLOSE_ALL_FILES) {
           return;
         }
       }
