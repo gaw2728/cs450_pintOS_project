@@ -44,7 +44,14 @@ int add_file_to_process (struct file *f);
 
 void syscall_init(void) {
   /********************** PA3 ADDED CODE **********************/
-  lock_init(&filesys);
+  
+  lock_init(&filesys); //initialize filesystem lock
+  lock_init(&mutex); //initialize mutex for readers/writers problem
+  sema_init(&write_allowed, 1); //initialize semaphore for readers/writers problem
+  reader_count = 0; //initialize reader count for readers/writers problem
+
+
+
   /******************** END PA3 ADDED CODE ********************/
   intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
@@ -321,9 +328,25 @@ int read(int fd, void *buffer, unsigned size) {
     return -1;
   }
 
+  // reader protection for readers/writers problem
+  lock_acquire (&mutex);
+   reader_count++;
+   if (reader_count == 1) {
+      sema_down (&write_allowed);
+   } 
+   lock_release (&mutex);
+
   // read from the given file and into a buffer
   // and record the number of bytes read
   bytes_read = file_read(f, buffer, size);
+
+  // end reader protection for readers/writers problem
+  lock_acquire (&mutex);
+  reader_count--;
+   if (reader_count == 0){
+     sema_up (&write_allowed);
+    } 
+  lock_release (&mutex);
 
   lock_release(&filesys);
 
@@ -349,10 +372,12 @@ int write(int fd, const void *buffer, unsigned size) {
     lock_release(&filesys);
     return -1;
   }
-
+  sema_down(&write_allowed); // begin write protection for readers/writers problem
   // write to the given file from a buffer
   // and record the number of bytes written
   bytes_written = file_write(f, buffer, size);
+
+  sema_up(&write_allowed); // end write protection for readers/writers problem
 
   lock_release(&filesys);
 
