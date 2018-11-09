@@ -167,5 +167,6 @@ void wake_thread(void);
 bool sleep_compare (const struct list_elem *left,
 const struct list_elem *right, void *aux UNUSED);
 /*End PA1 functions*/
+bool is_executable(const char *file);
 
 #endif /* threads/thread.h */

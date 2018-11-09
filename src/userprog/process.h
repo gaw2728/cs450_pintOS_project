@@ -31,6 +31,14 @@ int process_wait (pid_t);
 void process_exit (void);
 void process_activate (void);
 
+// holds general information about a file
+// TODO: CONSIDER REFACTORING FIELD NAMES
+struct open_file {
+  struct file *file;     // filesys file pointer
+  int fd;                // file descriptor
+  struct list_elem file_elem; // represents this file in the file_list
+};
+
 struct process_control_block
 {
 	/*=============== MEMBERS FOR PROCESS CREATION AND SYNC ===============*/

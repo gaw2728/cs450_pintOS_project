@@ -11,6 +11,7 @@
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
+#include "userprog/process.h"
 #include <console.h>
 #include <stdio.h>
 #include <syscall-nr.h>
@@ -20,13 +21,6 @@
 struct lock filesys;
 
 /********************** PA3 ADDED CODE **********************/
-// holds general information about a file
-// TODO: CONSIDER REFACTORING FIELD NAMES
-struct open_file {
-  struct file *file;     // filesys file pointer
-  int fd;                // file descriptor
-  struct list_elem elem; // represents this file in the file_list
-};
 
 static void syscall_handler(struct intr_frame *);
 
@@ -42,7 +36,6 @@ int write(int fd, const void *buffer, unsigned size);
 void seek(int fd, unsigned position);
 bool remove (const char *file);
 int open (const char *file);
-void close (int fd);
 unsigned tell(int fd);
 struct file *get_file(int fd);
 void mem_access_failure(void); // called to release lock and exit
@@ -263,6 +256,9 @@ int open (const char *file) {
     lock_release(&filesys);
     return -1; //TODO replace this?
   }
+  if(is_executable(file)){
+    file_deny_write(current_file);
+  }
   int fd = add_file_to_process(current_file);
   lock_release(&filesys);
   return fd;
@@ -424,7 +420,7 @@ struct file *get_file(int fd) {
   // navigate through the list of open file descriptors
   for (e = list_begin(&t_cur->file_list); e != list_end(&t_cur->file_list);
        e = list_next(e)) {
-    struct open_file *f = list_entry(e, struct open_file, elem);
+    struct open_file *f = list_entry(e, struct open_file, file_elem);
 
     // check and return the matching file descriptor
     if (fd == f->fd)
@@ -441,7 +437,7 @@ int add_file_to_process (struct file *f)
   pf->file = f;
   pf->fd = thread_current()->fd;
   thread_current()->fd++;
-  list_push_back(&thread_current()->file_list, &pf->elem);
+  list_push_back(&thread_current()->file_list, &pf->file_elem);
   return pf->fd;
 }
 
@@ -505,10 +501,10 @@ void close_file_from_process (int fd)
 
   while (e != list_end (&t->file_list)) {
       next = list_next(e);
-      struct open_file *pf = list_entry (e, struct open_file, elem);
+      struct open_file *pf = list_entry (e, struct open_file, file_elem);
       if (fd == pf->fd || fd == -1) {
         file_close(pf->file);
-        list_remove(&pf->elem);
+        list_remove(&pf->file_elem);
         free(pf);
         if (fd != -1) {
           return;

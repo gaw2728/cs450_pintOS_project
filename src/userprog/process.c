@@ -18,6 +18,7 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include <list.h>
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -269,6 +270,18 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
   /*=========================== PA3 MODIFIED CODE ============================*/
+  /*FILE DISCRIPTOR FREEING CAUSING TESTS TO FAIL.*/
+  /*Handle closing of all file resources*/
+  struct list_elem *e;
+  struct open_file *cur_file;
+
+  // navigate through the list of open file descriptors
+  for (e = list_begin(&cur->file_list); e != list_end(&cur->file_list);
+       e = list_next(e)) {
+    cur_file = list_entry(e, struct open_file, file_elem);
+    close(cur_file->fd);
+  }
+
   /*If this process had children all of the child resources need to be
   cleaned up*/
   struct list *child_list = &cur->child_list;

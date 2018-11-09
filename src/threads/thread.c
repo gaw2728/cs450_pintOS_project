@@ -626,6 +626,25 @@ void wake_thread() {
   intr_set_level(old_level);
 }
 
+/*
+  Traverses all_list of threads seeing if a file to be open
+  corresponds to a executable.
+*/
+bool is_executable(const char *file){
+  struct thread *t_cur = thread_current();
+  struct list_elem *e;
+
+  // navigate through the list of open file descriptors
+  for (e = list_begin(&all_list); e != list_end(&all_list);
+       e = list_next(e)) {
+    t_cur = list_entry(e, struct thread, allelem);
+    if(!strcmp(t_cur->name, file)){
+      return true;
+    }
+  }
+  return false;
+}
+
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof(struct thread, stack);
