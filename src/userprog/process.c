@@ -232,7 +232,7 @@ process_wait (tid_t child_tid)
   2) child is already being waited upon
   Both of these conditions cause an automatic return of -1*/
   if (child_pcb == NULL) {
-    return -1;
+    return -1; 
   }
   else if (child_pcb->parent_waiting == true) {
     return -1;

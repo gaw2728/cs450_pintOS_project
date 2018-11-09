@@ -1,8 +1,8 @@
-            +----------------------------+
-       	    |          CS 450            |
-            |   PROJECT 3: SYSTEM CALLS  |
-            |      DESIGN DOCUMENT     	 |
-            +----------------------------+
+                      +----------------------------+
+       	              |          CS 450            |
+                      |   PROJECT 3: SYSTEM CALLS  |
+                      |      DESIGN DOCUMENT       |
+                      +----------------------------+
 
 ---- GROUP ----
 
@@ -113,10 +113,13 @@ If everything proceeds successfully the caller declaires that it is
 waiting on the child and if the child has not yet exited, blocks on
 the child's PBC->process_wait_sema.
 
-When the semaphore is signaled and the parent wakes up it removes
-the child process from it's child list, grabs the child's exit
-status, and frees the child's PCB from memory. The child's exit status
-is returned.
+When the parent process is woken up by the child it is waiting on,
+this is when it interacts with process termination. If the child
+has signaled on PCB->process_wait_sema it is assumed that the child
+has exited and this is checked. Even though the child has exited it's
+pcb is maintained in memory for cases such as this. The parent is
+free to read the exit status of the child from its PCB and then
+able to free(the PCB's memory page).
 
 >> A5: Any access to user program memory at a user-specified address
 >> can fail due to a bad pointer value.  Such accesses must cause the
@@ -148,6 +151,13 @@ argument like the one passed to exec and then get a kernel pointer
 for the item. Similarly the call order is as follows:
 	Call Order: [user_to_kernel_ptr->check_address->mem_access_failure]
 
+UPDATE(11/9/18): userprog/exception.c
+The page fault handler has been updated to handle invalid dereferencing of
+pointers in user processes referring to restricted memory. This also catches
+the assigning of variables in user programs to restricted memory members.
+When any of these scinarios occur a page fault will happen, but it is caught
+and terminates the offending program instead of allowing the system to crash.
+
 ---- SYNCHRONIZATION ----
 
 >> A6: The "exec" system call returns -1 if loading the new executable
@@ -157,7 +167,7 @@ for the item. Similarly the call order is as follows:
 
 To handle this process_execute allocates page memory to create a new
 PCB for a soon to be created process and initializes all of its 
-members indicated in [A1] key member for loading being
+members indicated in [A1]; the key member for loading being
 process_init_sema. After the call to thread_create the parent
 creating process will decrement this new PCB->process_init_sema
 waiting for the child to load and signal on this semaphore that it
@@ -169,7 +179,11 @@ In essence the pid value returned denotes success or failure. Also,
 however, if a load attempt fails, the thread will be exited. This
 will go through the procedure of setting the child_exit and
 orphan_flag appropriately, supplying the exec caller with appropriate
-information.
+information through the (temporarily) still in memory PCB.
+
+if: PBC->pid = -2 the process has yet to have been established
+if: PBC->pid = -1 the process has failed to load for some reason
+else: the process has been successfully loaded and assigned a pid
 
 >> A7: Consider parent process P with child process C.  How do you
 >> ensure proper synchronization and avoid race conditions when P
@@ -179,17 +193,34 @@ information.
 >> there any special cases?
 
 Process control blocks are allocated in memory and are not neccesarily
-removed immediately. If there is a waiter than the PCB of that child is
-preserved ultil the waiter can glean appropriate intormation and free
-the child's PCB itself. If a waiter is wating on a process it is also
-signaled that the child has exited on the child's process_wait_sema.
-All resources are released for a process when it makes a call to sys_exit
-eventually making it's way to process_exit. In process_exit discriptors
-and other relevent items are freed. If P were to exit first there is an
-oprhan_flag to signal the need for the process's removal.
+removed immediately. 
+
+How do you ensure proper synchronization and avoid race conditions when
+P calls wait(C) before C exits? >> P will block on C->PCB->process_wait_sema
+until the child signals to the waiter that it has exited.
+
+After C exits? >> C will have signaled on it's PCB->process_wait_sema
+to the waiters that it has finished and exited.
+
+How do you ensure that all resources are freed in each case? >> When
+a process calls process_exit it will clear out all members that need
+clearing (files, child associations, etc.). It sets appropriate orphan
+flags, etc for children. Sets it's exited PCB flag and signals its
+PCB->process_wait_sema. If the process is orphaned it will clear its
+own PCB from memory, else it will rely on it's waiters to get the
+information they need and clear its PCB for it.
+
+How about when P terminates without waiting, before C exits? Then
+C has been orphaned like described above and will clear its own
+resources and remove it's PCB. when it calls process_exit.
+
+After C exits? >> Answered in the above if C exits without being orphaned 
+it will clear and resolve all of it's own resources or be adopted to be
+cleared.
 
 GEFF: If there are special cases I am uncertain. As of 11/2/2018 all
-exec tests passing.
+exec tests passing. The only case I might be able to concive would be
+that of a kill signal which might disrupt our implementation.
 
 ---- RATIONALE ----
 
@@ -205,4 +236,4 @@ TODO DISCUSS WITH GROUP
 
 /******************************************************************/
 TODO BY FILE CREATING AND MODIFYING SYSCALLS
-/******************************************************************/
+/******************************************************************/-
