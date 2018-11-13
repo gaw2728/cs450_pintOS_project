@@ -285,7 +285,7 @@ process_exit (void)
 
    lock_acquire(&filesys);
    
-   close_file_from_process (CLOSE_ALL_FILES);
+   close_files_of_process (CLOSE_ALL_FILES);
 
    lock_release(&filesys);
 

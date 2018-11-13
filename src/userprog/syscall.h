@@ -4,7 +4,7 @@
 void syscall_init (void);
 void sys_exit(int status);
 void close (int fd);
-void close_file_from_process (int fd);
+void close_files_of_process (int fd);
 
 /*This lock is for protecting file system access*/
 struct lock filesys;
