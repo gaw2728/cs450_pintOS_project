@@ -44,7 +44,7 @@ int add_file_to_process (struct file *f);
 
 void syscall_init(void) {
   /********************** PA3 ADDED CODE **********************/
-  
+
   lock_init(&filesys); //initialize filesystem lock
   lock_init(&mutex); //initialize mutex for readers/writers problem
   sema_init(&write_allowed, 1); //initialize semaphore for readers/writers problem
@@ -125,9 +125,8 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_FILESIZE:
-  /*TODO Elliott: SYSCALL FILESIZE HANDLER, MAKE SURE IT WORKS*/
     get_arguments(f, &args[0], 1);
-    f->eax = filesize((int)args[0]); //TODO Do I need to do this?
+    f->eax = filesize((int)args[0]);
     break;
 
   case SYS_READ:
@@ -189,16 +188,14 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   case SYS_SEEK:
-    /*TODO Elliott: SYSCALL SEEK HANDLER, MAKE SURE IT WORKS*/
     get_arguments(f, &args[0], 2);
     //args[0] = fd, args[1] = position to seek to
     seek((int)args[0], (unsigned)args[1]);
     break;
 
   case SYS_TELL:
-    /*TODO Elliott: SYSCALL TELL HANDLER, MAKE SURE IT WORKS*/
     get_arguments(f, &args[0], 1);
-    f->eax = tell((int)args[0]); //args[0] = fd //TODO Do I need to set f->eax?
+    f->eax = tell((int)args[0]); //args[0] = fd
     break;
 
   case SYS_CLOSE:
@@ -207,7 +204,6 @@ static void syscall_handler(struct intr_frame *f) {
     break;
 
   default:
-    // printf("EXIT CALLED IN DEFAULT\n");
     sys_exit(-1);
     break;
 
@@ -333,7 +329,7 @@ int read(int fd, void *buffer, unsigned size) {
    reader_count++;
    if (reader_count == 1) {
       sema_down (&write_allowed);
-   } 
+   }
    lock_release (&mutex);
 
   // read from the given file and into a buffer
@@ -345,7 +341,7 @@ int read(int fd, void *buffer, unsigned size) {
   reader_count--;
    if (reader_count == 0){
      sema_up (&write_allowed);
-    } 
+    }
   lock_release (&mutex);
 
   lock_release(&filesys);
