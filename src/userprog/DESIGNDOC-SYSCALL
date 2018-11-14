@@ -23,6 +23,10 @@ Alan Schexnayder <schexnat@dukes.jmu.edu>
 >> preparing your submission, other than the Pintos documentation, course
 >> text, lecture notes, and course staff.
 
+CONCERNING READER/WRITERS: Our reader writer implimentation follows the
+given solution on the project guidelines page: 
+http://w3.cs.jmu.edu/buchhofp/class/cs450_fa18/project3.html
+
 			     SYSTEM CALLS
 			   ================
 
