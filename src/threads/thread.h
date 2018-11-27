@@ -4,7 +4,10 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-
+/*PA1 ADDED: for semaphore stuff*/
+#include "threads/synch.h"
+/*PA3 ADDED: for process_control_block*/
+#include "userprog/process.h"
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -93,10 +96,30 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
+    /*ADDED: PA1 TIMER sleeping processes list type*/
+    struct semaphore sleep_sema;
+    struct list_elem sleep_elem;
+    /*ADDED: sleep_time holds the time a thread is to sleep*/
+    int64_t sleep_time;
+
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+
+    /*============================= PA3 ADDED CODE =============================*/
+    /* New process control block struct for PA3 */
+    struct process_control_block *pcb;
+    /* All threads will have a child list if needed*/
+    struct list child_list;
+
 #endif
+
+      // used for system calls relavent for the file system
+      struct list file_list;
+      // represents the number of file descriptors
+      // currently in use by the file system (excluding 0 and 1)
+      int fd;
+    /*=========================== END PA3 ADDED CODE ===========================*/
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
@@ -137,5 +160,13 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+/*Helper functions added for PA1*/
+void sleep_thread(int64_t ticks);
+void wake_thread(void);
+bool sleep_compare (const struct list_elem *left,
+const struct list_elem *right, void *aux UNUSED);
+/*End PA1 functions*/
+bool is_executable(const char *file);
 
 #endif /* threads/thread.h */
