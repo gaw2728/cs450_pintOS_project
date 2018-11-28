@@ -4,10 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-/*PA1 ADDED: for semaphore stuff*/
-#include "threads/synch.h"
-/*PA3 ADDED: for process_control_block*/
-#include "userprog/process.h"
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -95,31 +92,22 @@ struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
+    // Lab 1 : Begin here
+    int64_t blocked_ticks;              /* ticks till its blocked for */
+    // Lab 1 : End here
 
-    /*ADDED: PA1 TIMER sleeping processes list type*/
-    struct semaphore sleep_sema;
-    struct list_elem sleep_elem;
-    /*ADDED: sleep_time holds the time a thread is to sleep*/
-    int64_t sleep_time;
+    // Lab 2 : Begin here
+    int initial_priority;                   /* Old priority value. */
+    bool priority_changed_by_donation;      /* Convience boolean for determining if the priority of thread has changed by way of donation from other threads. */
+    struct list waiting_threads;            /* List of threads that are waiting for thread to release a lock. */
+    struct list_elem waiting_thread_elem;   /* list elements for waiting_threads. */
+    struct lock *waiting_for_lock;          /* The lock the thread is waiting for. */
+    // Lab 2 : End here
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-
-    /*============================= PA3 ADDED CODE =============================*/
-    /* New process control block struct for PA3 */
-    struct process_control_block *pcb;
-    /* All threads will have a child list if needed*/
-    struct list child_list;
-
 #endif
-
-      // used for system calls relavent for the file system
-      struct list file_list;
-      // represents the number of file descriptors
-      // currently in use by the file system (excluding 0 and 1)
-      int fd;
-    /*=========================== END PA3 ADDED CODE ===========================*/
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
@@ -149,6 +137,21 @@ const char *thread_name (void);
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 
+// Lab 1 : Begin here
+void thread_sleep(int64_t ticks);
+void thread_reinstate(void);
+// Lab 1 : End here
+
+// Lab 2 : Begin here
+void thread_yield_check(void);
+bool thread_priority_comparator(const struct list_elem *elem, const struct list_elem *otherElem, void *aux);
+void thread_remove_threads_waiting_for_lock(struct lock *lock);
+void thread_set_waiting_for_lock(struct lock *lock);
+void thread_unset_waiting_for_lock(void);
+void thread_perform_priority_donation(struct lock *lock, struct thread* t);
+void thread_update_priority(void);
+// Lab 2 : End here
+
 /* Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func (struct thread *t, void *aux);
 void thread_foreach (thread_action_func *, void *);
@@ -160,13 +163,5 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
-
-/*Helper functions added for PA1*/
-void sleep_thread(int64_t ticks);
-void wake_thread(void);
-bool sleep_compare (const struct list_elem *left,
-const struct list_elem *right, void *aux UNUSED);
-/*End PA1 functions*/
-bool is_executable(const char *file);
 
 #endif /* threads/thread.h */

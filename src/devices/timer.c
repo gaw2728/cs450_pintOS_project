@@ -30,7 +30,6 @@ static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
 
-
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
 void
@@ -61,7 +60,7 @@ timer_calibrate (void)
   /* Refine the next 8 bits of loops_per_tick. */
   high_bit = loops_per_tick;
   for (test_bit = high_bit >> 1; test_bit != high_bit >> 10; test_bit >>= 1)
-    if (!too_many_loops (loops_per_tick | test_bit))
+    if (!too_many_loops (high_bit | test_bit))
       loops_per_tick |= test_bit;
 
   printf ("%'"PRIu64" loops/s.\n", (uint64_t) loops_per_tick * TIMER_FREQ);
@@ -85,16 +84,16 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
-/* PA1 REIMPLEMENT: CALLS HELPER FUNCTION "sleep_thread"
-   in thread.c*/
+/* Sleeps for approximately TICKS timer ticks.  Interrupts must
+   be turned on. */
 void
 timer_sleep (int64_t ticks) 
 {
-  /*time is not negative*/
-  if(ticks<=0)
-    return;
-  /*Call thread.c function to sleep thread*/
-  sleep_thread(ticks);
+  int64_t start = timer_ticks ();
+  // Lab 1 : Begin here
+  ASSERT (intr_get_level () == INTR_ON);
+  thread_sleep(ticks);
+  // Lab 1 : End here
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -167,15 +166,15 @@ timer_print_stats (void)
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
 
-/* Timer interrupt handler. 
- PA1 REIMPLEMENT: Calls the helper function "wake_thread in threads.c*/
+/* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
-  /*Call thread.c function to wake up threads*/
-  wake_thread();
+  // Lab 1 : Begin here
   thread_tick ();
+  thread_reinstate();
+  // Lab 1 : End here
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

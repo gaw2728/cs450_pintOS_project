@@ -4,30 +4,12 @@
 #include "userprog/gdt.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
-#include "threads/vaddr.h"
-#include "userprog/pagedir.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
 
 static void kill (struct intr_frame *);
 static void page_fault (struct intr_frame *);
-/********************** PA3 ADDED CODE **********************/
-/**
- * Same implementation as sys_exit in syscall.c
- */
-static void exit_prog(int status) {
-  /*PA3 MODIFIED*/
-  /*Print exiting first*/
-  printf("%s: exit(%d)\n", thread_current()->name, status);
-  /*Retrieve pointer to PCB and set exit_status*/
-  struct process_control_block *pcb = thread_current()->pcb;
-  if (pcb != NULL) {
-    pcb->exit_status = status;
-  }
-  thread_exit();
-}
-/******************** END PA3 ADDED CODE ********************/
 
 /* Registers handlers for interrupts that can be caused by user
    programs.
@@ -144,9 +126,6 @@ page_fault (struct intr_frame *f)
   bool write;        /* True: access was write, false: access was read. */
   bool user;         /* True: access by user, false: access by kernel. */
   void *fault_addr;  /* Fault address. */
-  /********************** PA3 ADDED CODE **********************/
-  struct thread *cur = thread_current ();
-  /******************** END PA3 ADDED CODE ********************/
 
   /* Obtain faulting address, the virtual address that was
      accessed to cause the fault.  It may point to code or to
@@ -169,20 +148,6 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
-  /********************** PA3 ADDED CODE **********************/
-  /*The following code is purely to catch illegal dereferences
-  to kernel or null memory, and in the off-chance it makes it past
-  the page checks in syscall.c check for address to page validity.*/
-  if (!not_present)
-    exit_prog(-1);
-  
-  if (fault_addr == NULL || !not_present || !is_user_vaddr(fault_addr))
-    exit_prog(-1);
-
-  if (!pagedir_get_page (cur->pagedir, fault_addr))
-    exit_prog(-1);
-  /******************** END PA3 ADDED CODE ********************/
-
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
      which fault_addr refers. */
@@ -193,3 +158,4 @@ page_fault (struct intr_frame *f)
           user ? "user" : "kernel");
   kill (f);
 }
+
