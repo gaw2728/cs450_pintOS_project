@@ -72,9 +72,10 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
-// Lab 1 : Begin here
+
+/************************* MODIFICATION FOUND *************************/
 static bool thread_comparator(const struct list_elem *elem, const struct list_elem *otherElem, void *aux);
-// Lab 1 : End here
+/************************* END MODIFICATION *************************/
 
 
 /* Initializes the threading system by transforming the code
@@ -208,9 +209,9 @@ thread_create (const char *name, int priority,
   /* Add to run queue. */
   thread_unblock (t);
   old_level = intr_disable();
-  // Lab 2 : Begin here
+  /************************* MODIFICATION FOUND *************************/
   thread_yield_check();
-  // Lab 2 : End here
+  /************************* END MODIFICATION *************************/
   intr_set_level(old_level);
   return tid;
 }
@@ -330,6 +331,7 @@ thread_yield (void)
   intr_set_level (old_level);
 }
 
+/************************* MODIFICATION FOUND *************************/
 /**
  ### Lab 2 : Begin here
  ###
@@ -576,6 +578,7 @@ thread_set_priority (int new_priority)
  ### Lab 2 : End here
  ###
  */
+/************************* END MODIFICATION *************************/
 
 /* Returns the current thread's priority. */
 int

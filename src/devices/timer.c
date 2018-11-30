@@ -90,10 +90,10 @@ void
 timer_sleep (int64_t ticks) 
 {
   int64_t start = timer_ticks ();
-  // Lab 1 : Begin here
+  /************************* MODIFICATION FOUND *************************/
   ASSERT (intr_get_level () == INTR_ON);
   thread_sleep(ticks);
-  // Lab 1 : End here
+  /************************* END MODIFICATION *************************/
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -171,10 +171,10 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
-  // Lab 1 : Begin here
+  /************************* MODIFICATION FOUND *************************/
   thread_tick ();
   thread_reinstate();
-  // Lab 1 : End here
+  /************************* END MODIFICATION *************************/
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
