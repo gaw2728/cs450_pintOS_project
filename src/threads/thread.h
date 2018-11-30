@@ -93,6 +93,7 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
     
+    //Below variable used in his second project code
     /************************* MODIFICATION FOUND *************************/
     int64_t blocked_ticks;              /* ticks till its blocked for */
     /************************* END MODIFICATION *************************/
@@ -138,11 +139,9 @@ const char *thread_name (void);
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 
-/************************* MODIFICATION FOUND *************************/
-void thread_sleep(int64_t ticks);
-void thread_reinstate(void);
-/************************* END MODIFICATION *************************/
-
+/*The below functions need to be looked at, they are what drive this
+PA. Need to look into understanding what is going on, how to re-factor,
+how to change code.*/
 /************************* MODIFICATION FOUND *************************/
 void thread_yield_check(void);
 bool thread_priority_comparator(const struct list_elem *elem, const struct list_elem *otherElem, void *aux);
