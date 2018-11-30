@@ -92,18 +92,24 @@ struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
-    
+
     //Below variable used in his second project code
     /************************* MODIFICATION FOUND *************************/
     int64_t blocked_ticks;              /* ticks till its blocked for */
     /************************* END MODIFICATION *************************/
 
     /************************* MODIFICATION FOUND *************************/
-    int initial_priority;                   /* Old priority value. */
-    bool priority_changed_by_donation;      /* Convience boolean for determining if the priority of thread has changed by way of donation from other threads. */
-    struct list waiting_threads;            /* List of threads that are waiting for thread to release a lock. */
-    struct list_elem waiting_thread_elem;   /* list elements for waiting_threads. */
-    struct lock *waiting_for_lock;          /* The lock the thread is waiting for. */
+    // FIXME
+    // int initial_priority;                   /* Old priority value. */
+    int init_prior;                   /* Old priority value. */
+    // bool priority_changed_by_donation;      /* Convience boolean for determining if the priority of thread has changed by way of donation from other threads. */
+    bool donation_changed;      /* Convience boolean for determining if the priority of thread has changed by way of donation from other threads. */
+    // struct list waiting_threads;            /* List of threads that are waiting for thread to release a lock. */
+    struct list lock_waiting_list;            /* List of threads that are waiting for thread to release a lock. */
+    // struct list_elem waiting_thread_elem;   /* list elements for lock_waiting_list. */
+    struct list_elem lock_waiting_elem;   /* list elements for lock_waiting_list. */
+    // struct lock *waiting_for_lock;          /* The lock the thread is waiting for. */
+    struct lock *contested_lock;          /* The lock the thread is waiting for. */
     /************************* END MODIFICATION *************************/
 
 #ifdef USERPROG
@@ -146,8 +152,9 @@ how to change code.*/
 void thread_yield_check(void);
 bool thread_priority_comparator(const struct list_elem *elem, const struct list_elem *otherElem, void *aux);
 void thread_remove_threads_waiting_for_lock(struct lock *lock);
-void thread_set_waiting_for_lock(struct lock *lock);
-void thread_unset_waiting_for_lock(void);
+//FIXME
+// void thread_set_waiting_for_lock(struct lock *lock);
+// void thread_unset_waiting_for_lock(void);
 void thread_perform_priority_donation(struct lock *lock, struct thread* t);
 void thread_update_priority(void);
 /************************* END MODIFICATION *************************/
