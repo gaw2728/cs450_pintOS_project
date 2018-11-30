@@ -93,11 +93,6 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-    //Below variable used in his second project code
-    /************************* MODIFICATION FOUND *************************/
-    int64_t blocked_ticks;              /* ticks till its blocked for */
-    /************************* END MODIFICATION *************************/
-
     /************************* MODIFICATION FOUND *************************/
     // FIXME
     // int initial_priority;                   /* Old priority value. */
