@@ -8,11 +8,10 @@
 
 >> Fill in the names and email addresses of your group members.
 
-Geoffrey Wright <wrigh2ga@dukes.jmu.edu>
-Ryan Hurst      <hurstrc@dukes.jmu.edu>
-Elliot Germonavich
-Alan Schexnayder
-FirstName LastName <email@domain.example>
+Geoffrey Wright    <wrigh2ga@dukes.jmu.edu>
+Ryan Hurst         <hurstrc@dukes.jmu.edu>
+Elliot Germanovich <germanet@dukes.jmu.edu>
+Alan Schexnayder   <schexnat@dukes.jmu.edu>
 
 ---- PRELIMINARIES ----
 
@@ -31,19 +30,53 @@ FirstName LastName <email@domain.example>
 >> B1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+thread.h:
+        struct thread
+            ->int init_prior: Old priority value
+            ->bool donation_changed: boolean that determines if the priority of
+                      thread has changed by way of donation from other threads.
+            ->struct list lock_waiting_list: List of threads that are waiting
+                      for thread to release a lock.
+            ->struct list_elem lock_waiting_elem: list elements for lock_waiting_list.
+            ->struct lock *contested_lock: The lock the thread is waiting for
 
 >> B2: Explain the data structure used to track priority donation.
+
+We are using a lock pointer and a list to keep track of contested locks and
+which threads are waiting on them to be released. The lock pointer will point
+to the lock that's contested, we have an element in struct thread that allows
+us to add the thread who wishes to have the contested lock to the holder's list
+of threads that wish to have the lock.
 
 ---- ALGORITHMS ----
 
 >> B3: How do you ensure that the highest priority thread waiting for
 >> a lock, semaphore, or condition variable wakes up first?
+Any time an item is added to a synchronization mechanism's list (locks, semaphore,
+or condition variable) in synch.c, it is sorted by priority and placed in its
+correct spot. The highest priority thread is then woken up first. When an item
+is removed, the list is sorted again for safety's sake.
 
 >> B4: Describe the sequence of events when a call to lock_acquire()
 >> causes a priority donation.  How is nested donation handled?
 
+When lock_acquire() is invoked, if the lock in question is already held, the
+contested lock is recorded with the thread_current contested_lock pointer,
+then thread_current's lock_waiting_elem is added to the lock holder's
+lock_waiting_list. Once this has happened then the process of priority donation
+begins where the thread_current's priority and the lock holder priorities are
+saved and the holder adopts the priority of the requester. This recurs as needed
+until a thread is able to finish and the unlocking chain can begin.
+
 >> B5: Describe the sequence of events when lock_release() is called
 >> on a lock that a higher-priority thread is waiting for.
+
+This begins the chain of unlocking where the thread_current that is finishing
+with it's lock will search for the highest base level priority waiter in it's
+lock_waiting_list reset it's priority and relinquish it's donated priority.
+This will continue up the chain ensuring that when the original donor that
+donated it's priority has it's priority returned it will be able to acquire
+the lock it was waiting on.
 
 ---- SYNCHRONIZATION ----
 
@@ -51,7 +84,21 @@ FirstName LastName <email@domain.example>
 >> how your implementation avoids it.  Can you use a lock to avoid
 >> this race?
 
+If another thread is scheduled during the priority donation chain,
+the wrong thread could get the donated priority and run.
+To solve this problem the decision was made to disable interrupts during This
+short computation process. This way the timer interrupt handler cannot preempt
+the process and schedule a thread that would take advantage of this race
+condition.
+
 ---- RATIONALE ----
 
 >> B7: Why did you choose this design?  In what ways is it superior to
 >> another design you considered?
+
+When considering other approaches, like using a semaphore to signal impending
+waiters that a lock is ready, we felt it would be overkill and redundant.
+Our chosen implementation with a maintained wait list and a pointer to a
+contested lock allowed us control over the implementation and the recursion.
+Recursion can be traced in lists of waiting threads and the locks they hold
+creating a recursion tree of linked kernel threads.
