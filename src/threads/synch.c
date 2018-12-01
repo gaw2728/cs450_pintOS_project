@@ -32,11 +32,11 @@
 #include <stdio.h>
 #include <string.h>
 
-/************************* MODIFICATION FOUND *************************/
+/************************* PA4 CODE ADDED *************************/
 static bool sema_priority_comparator(const struct list_elem *elem,
                                      const struct list_elem *otherElem,
                                      void *aux UNUSED);
-/************************* END MODIFICATION *************************/
+/************************* PA4 CODE ENDED *************************/
 
 /* Initializes semaphore SEMA to VALUE.  A semaphore is a
    nonnegative integer along with two atomic operators for
@@ -69,10 +69,10 @@ void sema_down(struct semaphore *sema) {
 
   old_level = intr_disable();
   while (sema->value == 0) {
-    /************************* MODIFICATION FOUND *************************/
+    /************************* PA4 CODE ADDED *************************/
     list_insert_ordered(&sema->waiters, &thread_current()->elem,
-                        thread_priority_comparator, NULL);
-    /************************* END MODIFICATION *************************/
+                        compare_priority, NULL);
+    /************************* PA4 CODE ENDED *************************/
     thread_block();
   }
   sema->value--;
@@ -112,11 +112,9 @@ void sema_up(struct semaphore *sema) {
 
   old_level = intr_disable();
   if (!list_empty(&sema->waiters)) {
-    /************************* MODIFICATION FOUND *************************/
-    // Sorting list here is needed to ensure that new priorities of waiters are
-    // updated in list
-    list_sort(&sema->waiters, thread_priority_comparator, NULL);
-    /************************* END MODIFICATION *************************/
+    /************************* PA4 CODE ADDED *************************/
+    list_sort(&sema->waiters, compare_priority, NULL);
+    /************************* PA4 CODE ENDED *************************/
     thread_unblock(
         list_entry(list_pop_front(&sema->waiters), struct thread, elem));
   }
@@ -190,25 +188,21 @@ void lock_acquire(struct lock *lock) {
   ASSERT(lock != NULL);
   ASSERT(!intr_context());
   ASSERT(!lock_held_by_current_thread(lock));
-  /************************* MODIFICATION FOUND *************************/
+  /************************* PA4 CODE ADDED *************************/
   if (lock->holder) {
-    // another thread has already acquired this lock. so we add this lock into
-    // the current thread's contested_lock attribute
+    /* This means the lock is held so log the desired lock */
     thread_current()->contested_lock = lock;
-
-    // add current thread to lock holder's list of threads that are waiting for
-    // the lock
+    /* Insert self into the holder's waiters list */
     list_insert_ordered(&lock->holder->lock_waiting_list,
                         &thread_current()->lock_waiting_elem,
-                        thread_priority_comparator, NULL);
-
-    // do nested priority donation
-    thread_perform_priority_donation(lock, thread_current());
+                        compare_priority, NULL);
+    /* Start donation of priority */
+    donate_priority(lock, thread_current());
   }
   sema_down(&lock->semaphore);
-  lock->holder = thread_current(); // lock holder is the current thread.
+  lock->holder = thread_current();
   thread_current()->contested_lock = NULL;
-  /************************* END MODIFICATION *************************/
+  /************************* PA4 CODE ENDED *************************/
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -238,13 +232,13 @@ void lock_release(struct lock *lock) {
   ASSERT(lock != NULL);
   ASSERT(lock_held_by_current_thread(lock));
   enum intr_level old_level = intr_disable();
-  /************************* MODIFICATION FOUND *************************/
+  /************************* PA4 CODE ADDED *************************/
   thread_current()->donation_changed = false;
   if (!list_empty(&lock->semaphore.waiters)) {
-    thread_remove_threads_contested_lock(lock);
+    remove_lock_waiters(lock);
   }
-  thread_update_priority();
-  /************************* END MODIFICATION *************************/
+  update_priority();
+  /************************* PA4 CODE ENDED *************************/
   lock->holder = NULL;
   sema_up(&lock->semaphore);
   intr_set_level(old_level);
@@ -303,10 +297,10 @@ void cond_wait(struct condition *cond, struct lock *lock) {
   ASSERT(lock_held_by_current_thread(lock));
 
   sema_init(&waiter.semaphore, 0);
-  /************************* MODIFICATION FOUND *************************/
+  /************************* PA4 CODE ADDED *************************/
   list_insert_ordered(&cond->waiters, &waiter.elem, sema_priority_comparator,
                       NULL);
-  /************************* END MODIFICATION *************************/
+  /************************* PA4 CODE ENDED *************************/
   lock_release(lock);
   sema_down(&waiter.semaphore);
   lock_acquire(lock);
@@ -326,9 +320,9 @@ void cond_signal(struct condition *cond, struct lock *lock UNUSED) {
   ASSERT(lock_held_by_current_thread(lock));
 
   if (!list_empty(&cond->waiters)) {
-    /************************* MODIFICATION FOUND *************************/
+    /************************* PA4 CODE ADDED *************************/
     list_sort(&cond->waiters, sema_priority_comparator, NULL);
-    /************************* END MODIFICATION *************************/
+    /************************* PA4 CODE ENDED *************************/
     sema_up(
         &list_entry(list_pop_front(&cond->waiters), struct semaphore_elem, elem)
              ->semaphore);
@@ -349,11 +343,19 @@ void cond_broadcast(struct condition *cond, struct lock *lock) {
     cond_signal(cond, lock);
 }
 
-/************************* MODIFICATION FOUND *************************/
-/**
- * Priority comparator used to sort the list of sema waiters according to
- * highest priority of the waiters list
- */
+/************************* PA4 CODE ADDED *************************/
+/*
+  compare_priority
+  params:
+    -> elem: a semaphore elem
+    -> elem2: another semaphore elem
+    -> aux: not used
+
+  Specifically for use in condition variables due to how pintos
+  handles them. Does comparison over the set of semaprohre elements
+  looking as the associated thread ordering the semaphore list by
+  their associated thread's priorities. True on success.
+*/
 static bool sema_priority_comparator(const struct list_elem *elem,
                                      const struct list_elem *otherElem,
                                      void *aux UNUSED) {
@@ -361,20 +363,14 @@ static bool sema_priority_comparator(const struct list_elem *elem,
   struct semaphore_elem *otherSema =
       list_entry(otherElem, struct semaphore_elem, elem);
 
-  // early exit
   if (list_empty(&sema->semaphore.waiters)) {
-    // default for when both are empty AND if semaphore element does not have
-    // any threads waiting it is lower priority.
     return false;
   } else if (list_empty(&otherSema->semaphore.waiters)) {
-    // if semaphore element does not have any threads waiting it is lower
-    // priority.
     return true;
   }
-
-  return thread_priority_comparator(list_front(&sema->semaphore.waiters),
+  return compare_priority(list_front(&sema->semaphore.waiters),
                                     list_front(&otherSema->semaphore.waiters),
                                     NULL);
 }
 
-/************************* END MODIFICATION *************************/
+/************************* PA4 CODE ENDED *************************/

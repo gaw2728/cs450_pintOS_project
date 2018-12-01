@@ -190,9 +190,10 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
   /* Add to run queue. */
   thread_unblock(t);
   old_level = intr_disable();
-  /************************* MODIFICATION FOUND *************************/
+  /************************* PA4 CODE ADDED *************************/
+  //priority check in case thread has higher priority
   thread_yield_check();
-  /************************* END MODIFICATION *************************/
+  /************************* PA4 CODE ENDED *************************/
   intr_set_level(old_level);
   return tid;
 }
@@ -226,9 +227,9 @@ void thread_unblock(struct thread *t) {
 
   old_level = intr_disable();
   ASSERT(t->status == THREAD_BLOCKED);
-  // Lab 2 : Begin here
-  list_insert_ordered(&ready_list, &t->elem, thread_priority_comparator, NULL);
-  // Lab 2 : End here
+  /************************* PA4 CODE ADDED *************************/
+  list_insert_ordered(&ready_list, &t->elem, compare_priority, NULL);
+  /************************* PA4 CODE ENDED *************************/
   t->status = THREAD_READY;
   intr_set_level(old_level);
 }
@@ -285,10 +286,10 @@ void thread_yield(void) {
 
   old_level = intr_disable();
   if (cur != idle_thread) {
-    // Lab 2 : Begin here
-    list_insert_ordered(&ready_list, &cur->elem, thread_priority_comparator,
+    /************************* PA4 CODE ADDED *************************/
+    list_insert_ordered(&ready_list, &cur->elem, compare_priority,
                         NULL);
-    // Lab 2 : End here
+    /************************* PA4 CODE ENDED *************************/
   }
   cur->status = THREAD_READY;
   schedule();
@@ -388,7 +389,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
 
   ASSERT(t != NULL);
   ASSERT(PRI_MIN <= priority &&
-         priority <= PRI_MAX); // Question: should it default to PRI_DEFAULT?
+         priority <= PRI_MAX);
   ASSERT(name != NULL);
 
   memset(t, 0, sizeof *t);
@@ -398,9 +399,10 @@ static void init_thread(struct thread *t, const char *name, int priority) {
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   t->init_prior = priority;
-  // LAB2: multiple priority donate
+  /************************* PA4 CODE ADDED *************************/
   list_init(&t->lock_waiting_list);
   t->contested_lock = NULL;
+  /************************* PA4 CODE ENDED *************************/
   old_level = intr_disable();
   list_push_back(&all_list, &t->allelem);
   intr_set_level(old_level);
@@ -521,7 +523,7 @@ void thread_foreach(thread_action_func *func, void *aux) {
   }
 }
 
-/************************* MODIFICATION FOUND *************************/
+/************************* PA4 CODE ADDED *************************/
 
 /*
   thread_yield_check
@@ -531,7 +533,7 @@ void thread_foreach(thread_action_func *func, void *aux) {
 */
 void thread_yield_check(void) {
   if (!list_empty(&ready_list)) {
-    list_sort(&ready_list, thread_priority_comparator, NULL);
+    list_sort(&ready_list, compare_priority, NULL);
     struct thread *head =
         list_entry(list_front(&ready_list), struct thread, elem);
     if (thread_current()->priority < head->priority) {
@@ -541,7 +543,7 @@ void thread_yield_check(void) {
 }
 
 /*
-  thread_perform_priority_donation
+  donate_priority
   params:
     -> lock: a lock
     -> t: a thread
@@ -549,25 +551,25 @@ void thread_yield_check(void) {
   Recursively performs priority donation on a lock until a lower
   priority is discovered.
 */
-void thread_perform_priority_donation(struct lock *lock, struct thread *t) {
+void donate_priority(struct lock *lock, struct thread *t) {
   if (lock && lock->holder && lock->holder->priority < t->priority) {
     lock->holder->priority = t->priority;
     lock->holder->donation_changed = true;
 
     t = lock->holder;
     lock = t->contested_lock;
-    thread_perform_priority_donation(lock, t);
+    donate_priority(lock, t);
   }
 }
 
 /*
-  thread_remove_threads_contested_lock
+  remove_lock_waiters
   params:
     -> lock: a lock
 
   Remove all threads from the lock_waiting_list.
 */
-void thread_remove_threads_contested_lock(struct lock *lock) {
+void remove_lock_waiters(struct lock *lock) {
   if (!list_empty(&thread_current()->lock_waiting_list)) {
     struct list_elem *head = list_begin(&thread_current()->lock_waiting_list);
     struct thread *t;
@@ -583,12 +585,12 @@ void thread_remove_threads_contested_lock(struct lock *lock) {
 }
 
 /*
-  thread_update_priority
+  update_priority
 
   Checks the priority of each thread and updates the priority, in
   case of donation, when necessary.
 */
-void thread_update_priority(void) {
+void update_priority(void) {
   thread_current()->priority = thread_current()->init_prior;
   if (!list_empty(&thread_current()->lock_waiting_list)) {
     struct thread *largest_donation =
@@ -602,7 +604,7 @@ void thread_update_priority(void) {
 }
 
 /*
-  thread_priority_comparator
+  compare_priority
   params:
     -> elem: a given thread
     -> elem2: another given thread
@@ -612,7 +614,7 @@ void thread_update_priority(void) {
   order the the threads list. Returns true if the priority of thread is greater
   than the priority of thread2, false otherwise.
 */
-bool thread_priority_comparator(const struct list_elem *elem,
+bool compare_priority(const struct list_elem *elem,
                                 const struct list_elem *elem2,
                                 void *aux UNUSED) {
   ASSERT(elem != NULL && elem2 != NULL);
@@ -622,30 +624,27 @@ bool thread_priority_comparator(const struct list_elem *elem,
 }
 
 /*
-  thread_priority_comparator
+  thread_set_priority
   params:
     -> new_priority: the new priority the thread will be set to
 
   Sets a priority for the current thread.
 */
 void thread_set_priority(int new_priority) {
-  // disable interrupts while looping through the blocked queue
+
   enum intr_level interruptStatus = intr_disable();
 
   int old_priority = thread_current()->priority;
 
   thread_current()->init_prior = new_priority;
 
-  // do not change priority if its lower than a donated priority received
   if (thread_current()->donation_changed == true &&
       new_priority < thread_current()->priority) {
     return;
   }
 
-  // update priority as it is safe to do so now
   thread_current()->priority = new_priority;
 
-  // yield check
   if (old_priority > thread_current()->priority) {
     thread_yield_check();
   }
@@ -653,7 +652,7 @@ void thread_set_priority(int new_priority) {
   intr_set_level(interruptStatus);
 }
 
-/************************* END MODIFICATION *************************/
+/************************* PA4 CODE ENDED *************************/
 
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */

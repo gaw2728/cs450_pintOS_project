@@ -93,19 +93,20 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-    /************************* MODIFICATION FOUND *************************/
-    // FIXME
-    // int initial_priority;                   /* Old priority value. */
-    int init_prior;                   /* Old priority value. */
-    // bool priority_changed_by_donation;      /* Convience boolean for determining if the priority of thread has changed by way of donation from other threads. */
-    bool donation_changed;      /* Convience boolean for determining if the priority of thread has changed by way of donation from other threads. */
-    // struct list waiting_threads;            /* List of threads that are waiting for thread to release a lock. */
-    struct list lock_waiting_list;            /* List of threads that are waiting for thread to release a lock. */
-    // struct list_elem waiting_thread_elem;   /* list elements for lock_waiting_list. */
-    struct list_elem lock_waiting_elem;   /* list elements for lock_waiting_list. */
-    // struct lock *waiting_for_lock;          /* The lock the thread is waiting for. */
-    struct lock *contested_lock;          /* The lock the thread is waiting for. */
-    /************************* END MODIFICATION *************************/
+    /************************* PA4 CODE ADDED *************************/
+    /*
+      The below members are for the handling of priority donation.
+    */
+    //initial priority saving variable
+    int init_prior;
+    //priority donation flag
+    bool donation_changed;
+    //lock pointer for desired lock
+    struct lock *contested_lock;
+    //list constructs for tracking threads desireing locks
+    struct list lock_waiting_list;
+    struct list_elem lock_waiting_elem;
+    /************************* PA4 CODE ENDED *************************/
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -140,19 +141,13 @@ const char *thread_name (void);
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 
-/*The below functions need to be looked at, they are what drive this
-PA. Need to look into understanding what is going on, how to re-factor,
-how to change code.*/
-/************************* MODIFICATION FOUND *************************/
+/************************* PA4 CODE ADDED *************************/
 void thread_yield_check(void);
-bool thread_priority_comparator(const struct list_elem *elem, const struct list_elem *otherElem, void *aux);
-void thread_remove_threads_waiting_for_lock(struct lock *lock);
-//FIXME
-// void thread_set_waiting_for_lock(struct lock *lock);
-// void thread_unset_waiting_for_lock(void);
-void thread_perform_priority_donation(struct lock *lock, struct thread* t);
-void thread_update_priority(void);
-/************************* END MODIFICATION *************************/
+void remove_lock_waiters(struct lock *lock);
+void donate_priority(struct lock *lock, struct thread* t);
+void update_priority(void);
+bool compare_priority(const struct list_elem *elem, const struct list_elem *otherElem, void *aux);
+/************************* PA4 CODE ENDED *************************/
 
 /* Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func (struct thread *t, void *aux);
